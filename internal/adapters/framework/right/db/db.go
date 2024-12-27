@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	"github.com/go-sql-driver/mysql"
@@ -19,6 +20,7 @@ func NewDbAdapter(cfg mysql.Config) (*DbAdapter, error) {
 
 	err = db.Ping()
 	if err != nil {
+		fmt.Println("ping falure")
 		log.Fatalf("db ping failure :%v", err)
 	}
 	return &DbAdapter{db: db}, nil
@@ -30,4 +32,8 @@ func (da DbAdapter) CloseDbConnection() {
 	if err != nil {
 		log.Fatalf("db close ffailure: %v", err)
 	}
+}
+
+func (da *DbAdapter) GetDBInstance() *sql.DB {
+	return da.db
 }
