@@ -27,7 +27,8 @@ func (api *APIServer) Run() error {
 	router := mux.NewRouter()
 	subrouter := router.PathPrefix("/api/v1").Subrouter()
 
-	userHandler := user.NewUserHandler()
+	userStore := user.NewStore(api.db)
+	userHandler := user.NewUserHandler(userStore)
 	userHandler.RegisterRoutes(subrouter)
 
 	log.Println("Listening to ", api.addr)
