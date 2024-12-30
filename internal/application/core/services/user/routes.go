@@ -3,6 +3,7 @@ package user
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"ecom-api/internal/application/core/services/auth"
 	"ecom-api/internal/application/core/types/entity"
@@ -27,7 +28,7 @@ func (handler *UserHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/register", handler.handleRegister).Methods("POST")
 
 	//admin routes
-	// router.HandleFunc("/users/{userID}", auth.WithJWTAuth(handler.handleGetUser, handler.store)).Methods(http.MethodGet)
+	router.HandleFunc("/users/{userID}", handler.handleGetUser).Methods(http.MethodGet)
 }
 
 func (h *UserHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -77,4 +78,26 @@ func (h *UserHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, http.StatusCreated, nil, nil)
 
+}
+func (h *UserHandler) handleGetUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	str, ok := vars["userID"]
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing user ID"))
+		return
+	}
+
+	userID, err := strconv.Atoi(str)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid user ID"))
+		return
+	}
+
+	user, err := h.store.GetUserByID(userID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, user, nil)
 }
