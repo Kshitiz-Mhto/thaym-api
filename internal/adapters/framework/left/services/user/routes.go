@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"ecom-api/internal/application/core/services/auth"
+	"ecom-api/internal/adapters/framework/left/services/auth"
 	"ecom-api/internal/application/core/types/entity"
 	"ecom-api/internal/application/core/types/entity/payloads"
-	"ecom-api/internal/application/core/types/interfaces"
+	"ecom-api/internal/ports/right/rports"
 	"ecom-api/utils"
 
 	"github.com/go-playground/validator/v10"
@@ -16,10 +16,10 @@ import (
 )
 
 type UserHandler struct {
-	store interfaces.UserStore
+	store rports.UserStore
 }
 
-func NewUserHandler(store interfaces.UserStore) *UserHandler {
+func NewUserHandler(store rports.UserStore) *UserHandler {
 	return &UserHandler{store: store}
 }
 

@@ -1,4 +1,4 @@
-package interfaces
+package rports
 
 import (
 	"ecom-api/internal/application/core/types/entity"

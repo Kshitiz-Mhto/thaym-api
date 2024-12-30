@@ -5,7 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"ecom-api/internal/application/core/services/user"
+	"ecom-api/internal/adapters/framework/left/services/user"
+	"ecom-api/internal/adapters/framework/right/user_repo"
 
 	"github.com/gorilla/mux"
 )
@@ -27,7 +28,7 @@ func (api *APIServer) Run() error {
 	router := mux.NewRouter()
 	subrouter := router.PathPrefix("/api/v1").Subrouter()
 
-	userStore := user.NewStore(api.db)
+	userStore := user_repo.NewStore(api.db)
 	userHandler := user.NewUserHandler(userStore)
 	userHandler.RegisterRoutes(subrouter)
 
