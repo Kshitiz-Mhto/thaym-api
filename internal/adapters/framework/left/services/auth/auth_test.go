@@ -2,16 +2,17 @@ package auth
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateJWT(t *testing.T) {
-	secret := []byte("secret")
 
+	secret := []byte("secret")
 	token, err := CreateJWT(secret, 1)
-	if err != nil {
-		t.Errorf("error creating JWT: %v", err)
-	}
-	if token == "" {
-		t.Error("expected token to be not empty")
-	}
+
+	require.NoError(t, err, "error creating JWT")
+
+	assert.NotEmpty(t, token, "expected token to be not empty")
 }

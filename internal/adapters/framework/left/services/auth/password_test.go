@@ -2,33 +2,26 @@ package auth
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHashPassword(t *testing.T) {
 	hash, err := HashPassword("password")
-	if err != nil {
-		t.Errorf("error hashing password: %v", err)
-	}
 
-	if hash == "" {
-		t.Error("expected hash to be not empty")
-	}
+	require.NoError(t, err, "error hashing password")
+	require.NotEmpty(t, hash, "hash cannot be empty")
 
-	if hash == "password" {
-		t.Error("expected hash to be different from password")
-	}
+	assert.NotEqual(t, "password", hash, "inputed pass and hash should not be equal")
+
 }
 
 func TestComparePasswords(t *testing.T) {
 	hash, err := HashPassword("password")
-	if err != nil {
-		t.Errorf("error hashing password: %v", err)
-	}
 
-	if !ComparePasswords(hash, []byte("password")) {
-		t.Errorf("expected password to match hash")
-	}
-	if ComparePasswords(hash, []byte("notpassword")) {
-		t.Errorf("expected password to not match hash")
-	}
+	require.NoError(t, err, "error comparing passwords")
+
+	assert.True(t, ComparePasswords(hash, []byte("password")), "expected password to match hash")
+	assert.False(t, ComparePasswords(hash, []byte("notpassword")), "expected password to not match hash")
 }
