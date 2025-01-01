@@ -9,6 +9,7 @@ import (
 	"ecom-api/internal/application/core/types/entity"
 	"ecom-api/internal/application/core/types/entity/payloads"
 	"ecom-api/internal/ports/right/rports"
+	"ecom-api/pkg/configs"
 	"ecom-api/utils"
 
 	"github.com/go-playground/validator/v10"
@@ -32,7 +33,39 @@ func (handler *UserHandler) RegisterRoutes(router *mux.Router) {
 }
 
 func (h *UserHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
-	fmt.Print("jjjjj000000")
+	var user payloads.RegisterUserPayload
+	if err := utils.ParseJSON(r, &user); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	//Field Validation
+	if err := utils.Validate.Struct(user); err != nil {
+		errors := err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload: %v", errors))
+		return
+	}
+
+	u, err := h.store.GetUserByEmail(user.Email)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("not found, invalid email or password"))
+		return
+	}
+
+	if !auth.ComparePasswords(u.Password, []byte(user.Password)) {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid password"))
+		return
+	}
+
+	secret := []byte(configs.Envs.JWTSecret)
+
+	token, err := auth.CreateJWT(secret, u.ID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"token": token}, nil)
+
 }
 
 func (h *UserHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +96,6 @@ func (h *UserHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
-
 	// if it dont exist
 	err = h.store.CreateUser(entity.User{
 		FirstName: user.FirstName,

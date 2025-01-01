@@ -2,7 +2,6 @@ package user_repo
 
 import (
 	"database/sql"
-	"fmt"
 
 	"ecom-api/internal/application/core/types/entity"
 )
@@ -25,31 +24,49 @@ func (s *Store) CreateUser(user entity.User) error {
 }
 
 func (s *Store) GetUserByEmail(email string) (*entity.User, error) {
-	query := "SELECT id, first_name, last_name, email, password, created_at FROM users WHERE email = ?"
-	user := new(entity.User)
-
-	err := s.db.QueryRow(query, email).Scan(
-		&user.ID,
-		&user.FirstName,
-		&user.LastName,
-		&user.Email,
-		&user.Password,
-		&user.CreatedAt,
-	)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("user not found")
-	} else if err != nil {
+	rows, err := s.db.Query("SELECT * FROM users WHERE email = ?", email)
+	if err != nil {
 		return nil, err
 	}
+
+	user := new(entity.User)
+	for rows.Next() {
+		user, err = scanRowsIntoUser(rows)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// if u.ID == 0 {
+	// 	log.Printf("noooooooooooooooo9")
+
+	// 	return nil, fmt.Errorf("user not found")
+	// }
 
 	return user, nil
 }
 
 func (s *Store) GetUserByID(id int) (*entity.User, error) {
-	query := "SELECT id, first_name, last_name, email, password, created_at FROM users WHERE id = ?"
+	rows, err := s.db.Query("SELECT * FROM users WHERE id = ?", id)
+	if err != nil {
+		return nil, err
+	}
+
+	user := new(entity.User)
+	for rows.Next() {
+		user, err = scanRowsIntoUser(rows)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return user, nil
+}
+
+func scanRowsIntoUser(rows *sql.Rows) (*entity.User, error) {
 	user := new(entity.User)
 
-	err := s.db.QueryRow(query, id).Scan(
+	err := rows.Scan(
 		&user.ID,
 		&user.FirstName,
 		&user.LastName,
@@ -57,9 +74,7 @@ func (s *Store) GetUserByID(id int) (*entity.User, error) {
 		&user.Password,
 		&user.CreatedAt,
 	)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("user not found")
-	} else if err != nil {
+	if err != nil {
 		return nil, err
 	}
 
