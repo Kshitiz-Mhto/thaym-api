@@ -19,11 +19,12 @@ type contextKey string
 
 const UserKey contextKey = "userID"
 
+// middleware function that validates the JWT token
 func WithJWTAuth(handlerFunc http.HandlerFunc, store rports.UserStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tokenString := utils.GetTokenFromRequest(r)
+		tokenString := utils.GetTokenFromRequest(r) // extracts the token from the request header.
 
-		token, err := validateJWT(tokenString)
+		token, err := validateJWT(tokenString) // validates the JWT token using the secret from the environment variables.
 		if err != nil {
 			log.Printf("failed to validate token: %v", err)
 			permissionDenied(w)
@@ -55,7 +56,7 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store rports.UserStore) http.Hand
 
 		// Add the user to the context
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, UserKey, u.ID)
+		ctx = context.WithValue(ctx, UserKey, u.ID) // sets the user ID in the request context using a custom UserKey type to avoid key collisions.
 		r = r.WithContext(ctx)
 
 		// Call the function if the token is valid
