@@ -17,6 +17,10 @@ type Config struct {
 	DBName                 string
 	JWTSecret              string
 	JWTExpirationInSeconds int64
+	FromEmail              string
+	FromEmailPassword      string
+	FromEmailSMTP          string
+	SMTPAddress            string
 }
 
 var Envs = initConfig()
@@ -32,6 +36,10 @@ func initConfig() Config {
 		DBName:                 getEnv("DB_NAME", "ecom"),
 		JWTSecret:              getEnv("JWT_SECRET", "not-so-secret-now-is-it?"),
 		JWTExpirationInSeconds: getEnvAsInt("JWT_EXPIRATION_IN_SECONDS", 3600*24*7),
+		FromEmail:              getEnv("FROM_EMAIL", ""),
+		FromEmailPassword:      getEnv("FROM_EMAIL_PASSWORD", ""),
+		FromEmailSMTP:          getEnv("FROM_EMAIL_SMTP", "smtp.gmail.com"),
+		SMTPAddress:            getEnv("SMTP_ADDR", "smtp.gmail.com:587"),
 	}
 }
 
