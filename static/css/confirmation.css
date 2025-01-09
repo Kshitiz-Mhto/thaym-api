@@ -1,0 +1,56 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+}
+.container {
+    max-width: 600px;
+    margin: 20px auto;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+.header {
+    background: #4CAF50;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+.content {
+    padding: 20px;
+}
+.content p {
+    font-size: 4vw; /* Default font size based on viewport width */
+}
+.code-box {
+    font-size: 24px;
+    font-weight: bold;
+    color: #4CAF50;
+    text-align: center;
+    margin: 20px 0;
+    background: #f3f3f3;
+    padding: 10px;
+    border-radius: 8px;
+}
+.footer {
+    text-align: center;
+    padding: 10px;
+    font-size: 12px;
+    color: #777;
+    background: #f1f1f1;
+}
+
+/* Responsive font adjustments for <p> using media queries */
+@media (min-width: 600px) {
+    .content p {
+        font-size: 20px; /* Fixed size for medium to larger screens */
+    }
+}
+
+@media (min-width: 900px) {
+    .content p {
+        font-size: 23px;
+    }
+}
