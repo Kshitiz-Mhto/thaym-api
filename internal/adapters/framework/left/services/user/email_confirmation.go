@@ -1,0 +1,84 @@
+package user
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"net/smtp"
+	"path/filepath"
+	"strings"
+	"text/template"
+
+	"ecom-api/internal/application/core/types/entity/payloads"
+	"ecom-api/pkg/configs"
+	"ecom-api/utils"
+)
+
+func sendHtmlEmail(to []string, subject string, htmlBody string) error {
+	auth := smtp.PlainAuth(
+		"",
+		configs.Envs.FromEmail,
+		configs.Envs.FromEmailPassword,
+		configs.Envs.FromEmailSMTP,
+	)
+
+	headers := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";"
+
+	message := "Subject: " + subject + "\n" + headers + "\n\n" + htmlBody
+	return smtp.SendMail(
+		configs.Envs.SMTPAddress,
+		auth,
+		configs.Envs.FromEmail,
+		to,
+		[]byte(message),
+	)
+}
+
+func HTMLTemplateEmailHandler(w http.ResponseWriter, r *http.Request) {
+	var reqBody payloads.EmailWithTemplateRequestBody
+	basePathForEmailHtml := "ecom-api/static/"
+	emailSubject := "Verify Your Email"
+
+	// Ensure the request method is POST
+	if r.Method != http.MethodPost {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	// Parse the JSON request body
+	err := json.NewDecoder(r.Body).Decode(&reqBody)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// Convert Param3 (comma-separated string) to a slice of strings
+	to := strings.Split(reqBody.ToAddr, ",")
+
+	templatePath := filepath.Join(basePathForEmailHtml, reqBody.Template+".html")
+	// Parse the HTML template
+	// tmpl, err := template.ParseFiles("../../../../../../static/" + reqBody.Template + ".html")
+	tmpl, err := template.ParseFiles(templatePath)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("failed to parse template: %v", err))
+		return
+	}
+
+	// Render the template with the map data
+	var rendered bytes.Buffer
+	if err := tmpl.Execute(&rendered, reqBody.Vars); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("failed to render template: %v", err))
+		return
+	}
+
+	err = sendHtmlEmail(to, emailSubject, rendered.String())
+	if err != nil {
+		log.Println(err.Error())
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]bool{"success": true}, nil)
+}
