@@ -28,3 +28,9 @@ type LoginUserPayload struct {
 type CartCheckoutPayload struct {
 	Items []entity.CartCheckoutItem `json:"items" validate:"required"`
 }
+
+type EmailWithTemplateRequestBody struct {
+	ToAddr   string            `json:"to_addr"`
+	Template string            `json:"template"`
+	Vars     map[string]string `json:"vars"`
+}
