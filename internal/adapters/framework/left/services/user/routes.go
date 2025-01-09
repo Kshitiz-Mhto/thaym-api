@@ -29,7 +29,7 @@ func (handler *UserHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/register", handler.handleRegister).Methods("POST")
 
 	//admin routes
-	router.HandleFunc("/users/{userID}", handler.handleGetUser).Methods(http.MethodGet)
+	router.HandleFunc("/users/{userID}", auth.WithJWTAuth(handler.handleGetUser, handler.store)).Methods(http.MethodGet)
 }
 
 func (h *UserHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
