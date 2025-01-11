@@ -34,6 +34,13 @@ func (handler *UserHandler) RegisterRoutes(router *mux.Router) {
 
 func (h *UserHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var user payloads.LoginUserPayload
+
+	// Ensure the request method is POST
+	if r.Method != http.MethodPost {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
 	if err := utils.ParseJSON(r, &user); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return
@@ -69,8 +76,15 @@ func (h *UserHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
-	// get json paload to check the user exist or not
 	var user payloads.RegisterUserPayload
+
+	// Ensure the request method is POST
+	if r.Method != http.MethodPost {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	// get json paload to check the user exist or not
 	if err := utils.ParseJSON(r, &user); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return
