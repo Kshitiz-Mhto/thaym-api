@@ -38,7 +38,7 @@ func sendHtmlEmail(to []string, subject string, htmlBody string) error {
 
 func HTMLTemplateEmailHandler(w http.ResponseWriter, r *http.Request) {
 	var reqBody payloads.EmailWithTemplateRequestBody
-	basePathForEmailHtml := "ecom-api/static/"
+	basePathForEmailHtml := "./static/"
 	emailSubject := "Verify Your Email"
 
 	// Ensure the request method is POST
@@ -57,9 +57,9 @@ func HTMLTemplateEmailHandler(w http.ResponseWriter, r *http.Request) {
 	// Convert Param3 (comma-separated string) to a slice of strings
 	to := strings.Split(reqBody.ToAddr, ",")
 
-	templatePath := filepath.Join(basePathForEmailHtml, reqBody.Template+".html")
 	// Parse the HTML template
 	// tmpl, err := template.ParseFiles("../../../../../../static/" + reqBody.Template + ".html")
+	templatePath := filepath.Join(basePathForEmailHtml, reqBody.Template+".html")
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("failed to parse template: %v", err))
