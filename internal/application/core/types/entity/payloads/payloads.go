@@ -20,6 +20,14 @@ type RegisterUserPayload struct {
 	PasswordRe string `json:"passwordRe" validate:"required,min=5,max=130,eqfield=Password"`
 }
 
+type RegisterUserConfirmationPayload struct {
+	FirstName string `json:"firstName" validate:"required"`
+	LastName  string `json:"lastName" validate:"required"`
+	Email     string `json:"email" validate:"required,email"`
+	Password  string `json:"password" validate:"required,min=5,max=130"`
+	Token     string `json:"token" validate:"required"`
+}
+
 type LoginUserPayload struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
