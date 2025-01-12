@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 )
 
 var Validate = validator.New()
@@ -49,4 +50,8 @@ func GetTokenFromRequest(r *http.Request) string {
 	}
 
 	return ""
+}
+
+func GenerateRandomUniqueIdentifier() string {
+	return uuid.New().String()
 }
