@@ -2,16 +2,21 @@ package entity
 
 import (
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 type Product struct {
-	ID          int     `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Image       string  `json:"image"`
-	Price       float64 `json:"price"`
-	// note that this isn't the best way to handle quantity
-	// because it's not atomic (in ACID), but it's good enough for this example
-	Quantity  int       `json:"quantity"`
-	CreatedAt time.Time `json:"createdAt"`
+	ProductId   string          `json:"productId"`   // Unique identifier for the product
+	Name        string          `json:"name"`        // Product name
+	Description string          `json:"description"` // Product description
+	Image       string          `json:"image"`       // URL or path to the product's image
+	Price       decimal.Decimal `json:"price"`       // Price of the product
+	Currency    string          `json:"currency"`    // Currency code (e.g., USD, EUR)
+	Quantity    int             `json:"quantity"`    // Inventory count
+	Category    string          `json:"category"`    // Product category
+	Tags        []string        `json:"tags"`        // List of tags for filtering or searching
+	IsActive    bool            `json:"isActive"`    // Indicates if the product is active/available for purchase
+	CreatedAt   time.Time       `json:"createdAt"`   // Timestamp for when the product was created
+	UpdatedAt   time.Time       `json:"updatedAt"`   // Timestamp for when the product was last updated
 }
