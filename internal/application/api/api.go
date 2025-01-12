@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"ecom-api/internal/adapters/framework/left/services/auth/token"
 	"ecom-api/internal/adapters/framework/left/services/user"
 	"ecom-api/internal/adapters/framework/right/user_repo"
 
@@ -28,8 +29,9 @@ func (api *APIServer) Run() error {
 	router := mux.NewRouter()
 	subrouter := router.PathPrefix("/api/v1").Subrouter()
 
+	tokenStore := token.NewTokenStore()
 	userStore := user_repo.NewStore(api.db)
-	userHandler := user.NewUserHandler(userStore)
+	userHandler := user.NewUserHandler(userStore, tokenStore)
 	userHandler.RegisterRoutes(subrouter)
 
 	log.Println("Listening to ", api.addr)

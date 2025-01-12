@@ -2,10 +2,13 @@ package user
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"ecom-api/internal/adapters/framework/left/services/auth"
+	"ecom-api/internal/adapters/framework/left/services/auth/token"
 	"ecom-api/internal/application/core/types/entity"
 	"ecom-api/internal/application/core/types/entity/payloads"
 	"ecom-api/internal/ports/right/rports"
@@ -17,16 +20,18 @@ import (
 )
 
 type UserHandler struct {
-	store rports.UserStore
+	store      rports.UserStore
+	tokenStore *token.TokenStore
 }
 
-func NewUserHandler(store rports.UserStore) *UserHandler {
-	return &UserHandler{store: store}
+func NewUserHandler(store rports.UserStore, tokenStore *token.TokenStore) *UserHandler {
+	return &UserHandler{store: store, tokenStore: tokenStore}
 }
 
 func (handler *UserHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/login", handler.handleLogin).Methods("POST")
 	router.HandleFunc("/register", handler.handleRegister).Methods("POST")
+	router.HandleFunc("/register_confirm", handler.handleRegisterConfirmation).Methods("POST")
 
 	//admin routes
 	router.HandleFunc("/users/{userID}", auth.WithJWTAuth(handler.handleGetUser, handler.store)).Methods(http.MethodGet)
@@ -104,27 +109,70 @@ func (h *UserHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Generate a new token
+	newToken, err := token.GenerateToken()
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("failed to generate token"))
+		return
+	}
+
+	h.tokenStore.Set(user.Email, newToken, 7*time.Minute)
+
+	// send verification code to user email
+	HTMLTemplateEmailHandler(w, r, user.Email, map[string]string{"verification_code": newToken})
+
+}
+
+func (h *UserHandler) handleRegisterConfirmation(w http.ResponseWriter, r *http.Request) {
+	var user payloads.RegisterUserConfirmationPayload
+
+	// Ensure the request method is POST
+	if r.Method != http.MethodPost {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	// get json paload to check the user exist or not
+	if err := utils.ParseJSON(r, &user); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	//Field Validation
+	if err := utils.Validate.Struct(user); err != nil {
+		errors := err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload: %v", errors))
+		return
+	}
+
+	storedToken, exists := h.tokenStore.Get(user.Email)
+	log.Printf("token0000000000000::: %s -------------- %s", storedToken, user.Token)
+	if !exists || storedToken != user.Token {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid or expired token"))
+		return
+	}
+
 	// hash password
 	hashedPassword, err := auth.HashPassword(user.Password)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
-	// if it dont exist
+
 	err = h.store.CreateUser(entity.User{
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Email:     user.Email,
-		Password:  hashedPassword,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		Email:      user.Email,
+		Password:   hashedPassword,
+		IsVerified: true,
 	})
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
-
-	utils.WriteJSON(w, http.StatusCreated, nil, nil)
-
+	utils.WriteJSON(w, http.StatusCreated, map[string]string{"code": storedToken, "usertoken": user.Token}, nil)
 }
+
 func (h *UserHandler) handleGetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	str, ok := vars["userID"]
