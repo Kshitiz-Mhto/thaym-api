@@ -2,7 +2,6 @@ package user
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -146,11 +145,12 @@ func (h *UserHandler) handleRegisterConfirmation(w http.ResponseWriter, r *http.
 	}
 
 	storedToken, exists := h.tokenStore.Get(user.Email)
-	log.Printf("token0000000000000::: %s -------------- %s", storedToken, user.Token)
 	if !exists || storedToken != user.Token {
 		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid or expired token"))
 		return
 	}
+
+	h.tokenStore.Delete(user.Email)
 
 	// hash password
 	hashedPassword, err := auth.HashPassword(user.Password)
