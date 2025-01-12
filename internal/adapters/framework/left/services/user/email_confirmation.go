@@ -2,7 +2,6 @@ package user
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,7 +10,6 @@ import (
 	"strings"
 	"text/template"
 
-	"ecom-api/internal/application/core/types/entity/payloads"
 	"ecom-api/pkg/configs"
 	"ecom-api/utils"
 )
@@ -36,9 +34,8 @@ func sendHtmlEmail(to []string, subject string, htmlBody string) error {
 	)
 }
 
-func HTMLTemplateEmailHandler(w http.ResponseWriter, r *http.Request) {
-	var reqBody payloads.EmailWithTemplateRequestBody
-	basePathForEmailHtml := "./static/"
+func HTMLTemplateEmailHandler(w http.ResponseWriter, r *http.Request, addr string, vars map[string]string) {
+	basePathForEmailHtml := "./internal/adapters/framework/left/services/user/static/"
 	emailSubject := "Verify Your Email"
 
 	// Ensure the request method is POST
@@ -46,20 +43,11 @@ func HTMLTemplateEmailHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
 		return
 	}
-
-	// Parse the JSON request body
-	err := json.NewDecoder(r.Body).Decode(&reqBody)
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
-		return
-	}
-
 	// Convert Param3 (comma-separated string) to a slice of strings
-	to := strings.Split(reqBody.ToAddr, ",")
+	to := strings.Split(addr, ",")
 
 	// Parse the HTML template
-	// tmpl, err := template.ParseFiles("../../../../../../static/" + reqBody.Template + ".html")
-	templatePath := filepath.Join(basePathForEmailHtml, reqBody.Template+".html")
+	templatePath := filepath.Join(basePathForEmailHtml, "confirmation.html")
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("failed to parse template: %v", err))
@@ -68,7 +56,7 @@ func HTMLTemplateEmailHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Render the template with the map data
 	var rendered bytes.Buffer
-	if err := tmpl.Execute(&rendered, reqBody.Vars); err != nil {
+	if err := tmpl.Execute(&rendered, vars); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("failed to render template: %v", err))
 		return
 	}
@@ -80,5 +68,5 @@ func HTMLTemplateEmailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, map[string]bool{"success": true}, nil)
+	utils.WriteJSON(w, http.StatusOK, map[string]bool{"emailSent": true}, nil)
 }
