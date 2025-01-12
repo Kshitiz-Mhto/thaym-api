@@ -72,7 +72,12 @@ func scanRowsIntoUser(rows *sql.Rows) (*entity.User, error) {
 		&user.LastName,
 		&user.Email,
 		&user.Password,
+		&user.IsVerified,
+		&user.Role,
+		&user.IsLocked,
 		&user.CreatedAt,
+		&user.UpdatedAt,
+		&user.DeletedAt,
 	)
 	if err != nil {
 		return nil, err
