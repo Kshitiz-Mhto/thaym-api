@@ -26,6 +26,7 @@ func main() {
 		log.Fatalf("%v", err)
 	}
 	dbInstance := dbAdapter.GetDBInstance()
+	defer dbAdapter.CloseDbConnection()
 	server := api.NewAPIServer(fmt.Sprintf(":%s", configs.Envs.Port), dbInstance)
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
