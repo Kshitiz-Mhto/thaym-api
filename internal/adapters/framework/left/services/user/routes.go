@@ -28,9 +28,9 @@ func NewUserHandler(store rports.UserStore, tokenStore *token.TokenStore) *UserH
 }
 
 func (handler *UserHandler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/login", handler.handleLogin).Methods("POST")
-	router.HandleFunc("/register", handler.handleRegister).Methods("POST")
-	router.HandleFunc("/register_confirm", handler.handleRegisterConfirmation).Methods("POST")
+	router.HandleFunc("/login", handler.handleLogin).Methods(http.MethodPost)
+	router.HandleFunc("/register", handler.handleRegister).Methods(http.MethodPost)
+	router.HandleFunc("/register_confirm", handler.handleRegisterConfirmation).Methods(http.MethodPost)
 
 	//admin routes
 	router.HandleFunc("/users/{userID}", auth.WithJWTAuth(handler.handleGetUser, handler.store)).Methods(http.MethodGet)
