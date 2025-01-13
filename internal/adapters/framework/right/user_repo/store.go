@@ -29,12 +29,18 @@ func (s *Store) GetUserByEmail(email string) (*entity.User, error) {
 		return nil, err
 	}
 
+	defer rows.Close()
+
 	user := new(entity.User)
 	for rows.Next() {
 		user, err = scanRowsIntoUser(rows)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
 	}
 
 	// if u.ID == 0 {
@@ -52,12 +58,18 @@ func (s *Store) GetUserByID(id int) (*entity.User, error) {
 		return nil, err
 	}
 
+	defer rows.Close()
+
 	user := new(entity.User)
 	for rows.Next() {
 		user, err = scanRowsIntoUser(rows)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return user, nil

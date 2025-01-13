@@ -7,6 +7,7 @@ import (
 )
 
 type CreateProductPayload struct {
+	ProductId   string          `json:"productId" validate:"required,len=36"`
 	Name        string          `json:"name" validate:"required"`
 	Description string          `json:"description" validate:"required"`
 	Image       string          `json:"image" validate:"required,url"`
