@@ -17,7 +17,7 @@ func NewStore(db *sql.DB) *Store {
 }
 
 func (s *Store) CreateProduct(product payloads.CreateProductPayload) error {
-	_, err := s.db.Exec("INSERT INTO products(productId, name, description, image, price, currency, quantity, category, tags, isActive) VALUES (?,?,?,?,?,?,?,?,?,?)", product.ProductId, product.Name, product.Description, product.Image, product.Price, product.Currency, product.Quantity, product.Category, product.Tags, product.IsActive)
+	_, err := s.db.Exec("INSERT INTO products(name, description, image, price, currency, quantity, category, tags, isActive) VALUES (?,?,?,?,?,?,?,?,?,?)", product.Name, product.Description, product.Image, product.Price, product.Currency, product.Quantity, product.Category, product.Tags, product.IsActive)
 	if err != nil {
 		return err
 	}
