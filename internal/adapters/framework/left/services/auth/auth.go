@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"ecom-api/internal/ports/right/rports"
@@ -38,14 +37,7 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store rports.UserStore) http.Hand
 		}
 
 		claims := token.Claims.(jwt.MapClaims)
-		str := claims["userID"].(string)
-
-		userID, err := strconv.Atoi(str)
-		if err != nil {
-			log.Printf("failed to convert userID to int: %v", err)
-			permissionDenied(w)
-			return
-		}
+		userID := claims["userID"].(string)
 
 		u, err := store.GetUserByID(userID)
 		if err != nil {
@@ -64,11 +56,11 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store rports.UserStore) http.Hand
 	}
 }
 
-func CreateJWT(secret []byte, userID int) (string, error) {
+func CreateJWT(secret []byte, userID string) (string, error) {
 	expiration := time.Second * time.Duration(configs.Envs.JWTExpirationInSeconds)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID":    strconv.Itoa(int(userID)),
+		"userID":    string(userID),
 		"expiresAt": time.Now().Add(expiration).Unix(),
 	})
 
