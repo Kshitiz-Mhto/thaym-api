@@ -2,20 +2,18 @@ package payloads
 
 import (
 	"ecom-api/internal/application/core/types/entity"
-
-	"github.com/shopspring/decimal"
 )
 
 type CreateProductPayload struct {
-	Name        string          `json:"name" validate:"required"`
-	Description string          `json:"description" validate:"required"`
-	Image       string          `json:"image" validate:"required,url"`
-	Price       decimal.Decimal `json:"price" validate:"required,gt=0"`
-	Currency    string          `json:"currency" validate:"required,len=3"` // ISO 4217 currency code
-	Quantity    int             `json:"quantity" validate:"required,gte=0"`
-	Category    string          `json:"category" validate:"required"`
-	Tags        []string        `json:"tags"` // JSON array of tags
-	IsActive    bool            `json:"isActive" validate:"required"`
+	Name        string   `json:"name" validate:"required"`
+	Description string   `json:"description" validate:"required"`
+	Image       string   `json:"image" validate:"required,url"`
+	Price       float64  `json:"price" validate:"required,gt=0"`
+	Currency    string   `json:"currency" validate:"required,len=3"` // ISO 4217 currency code
+	Quantity    int      `json:"quantity" validate:"required,gte=0"`
+	Category    string   `json:"category" validate:"required"`
+	Tags        []string `json:"tags"` // JSON array of tags
+	IsActive    bool     `json:"isActive" validate:"required"`
 }
 
 type RegisterUserPayload struct {
@@ -40,5 +38,5 @@ type LoginUserPayload struct {
 }
 
 type CartCheckoutPayload struct {
-	Items []entity.CartCheckoutItem `json:"items" validate:"required"`
+	Items []entity.CartCheckoutItem `json:"items" validate:"required,dive,required"` // List of items in the cart, each item is required
 }
