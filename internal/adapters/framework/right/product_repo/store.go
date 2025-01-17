@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"ecom-api/internal/application/core/types/entity"
 	"ecom-api/internal/application/core/types/entity/payloads"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -17,7 +18,11 @@ func NewStore(db *sql.DB) *Store {
 }
 
 func (s *Store) CreateProduct(product payloads.CreateProductPayload) error {
-	_, err := s.db.Exec("INSERT INTO products(name, description, image, price, currency, quantity, category, tags, isActive) VALUES (?,?,?,?,?,?,?,?,?,?)", product.Name, product.Description, product.Image, product.Price, product.Currency, product.Quantity, product.Category, product.Tags, product.IsActive)
+	tagsJSON, errr := json.Marshal(product.Tags)
+	if errr != nil {
+		return errr
+	}
+	_, err := s.db.Exec("INSERT INTO products(name, description, image, price, currency, quantity, category, tags, isActive) VALUES (?,?,?,?,?,?,?,?,?)", product.Name, product.Description, product.Image, product.Price, product.Currency, product.Quantity, product.Category, tagsJSON, product.IsActive)
 	if err != nil {
 		return err
 	}
@@ -48,18 +53,21 @@ func (s *Store) GetProductByID(id string) (*entity.Product, error) {
 	return product, nil
 }
 
-func (s *Store) GetProductsByID(ids []string) ([]entity.Product, error) {
+func (s *Store) GetProductsByIDs(ids []string) ([]entity.Product, error) {
 
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("slice of ids is empty")
 	}
 
-	placeholder := strings.Repeat(",?", len(ids)-1)
-	// If productIDs contains [1, 2, 3], the query becomes:
-	query := fmt.Sprintf("SELECT * FROM products WHERE productId IN (?%s)", placeholder)
+	// Build the query with the proper number of placeholders for IN clause
+	placeholders := make([]string, len(ids))
+	for i := range ids {
+		placeholders[i] = "?"
+	}
+	query := fmt.Sprintf("SELECT * FROM products WHERE productId IN (%s)", strings.Join(placeholders, ","))
 
 	args := make([]interface{}, len(ids))
-	for i, v := range args {
+	for i, v := range ids {
 		args[i] = v
 	}
 
@@ -85,7 +93,7 @@ func (s *Store) GetProductsByID(ids []string) ([]entity.Product, error) {
 		return nil, err
 	}
 
-	return nil, nil
+	return products, nil
 }
 
 func (s *Store) GetAllProducts() ([]*entity.Product, error) {
@@ -121,6 +129,26 @@ func (s *Store) UpdateProduct(product entity.Product) error {
 	return nil
 }
 
+func (s *Store) DeleteProductByID(productId string) error {
+	_, err := s.db.Exec("DELETE FROM products WHERE productId = ?", productId)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Store) UpdateProductByID(productId string) error {
+	var product payloads.CreateProductPayload
+
+	_, err := s.db.Exec("UPDATE products SET name = ?, description = ?, image = ?, price = ?, currency = ?, quantity = ?, category = ?, tags = ?, isActive = ?, updatedAt = CURRENT_TIMESTAMP WHERE productId = ?", product.Name, product.Description, product.Image, product.Price, product.Currency, product.Quantity, product.Category, product.Tags, product.IsActive, productId)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func scanRowsIntoProduct(rows *sql.Rows) (*entity.Product, error) {
 	product := new(entity.Product)
 	err := rows.Scan(
@@ -141,9 +169,9 @@ func scanRowsIntoProduct(rows *sql.Rows) (*entity.Product, error) {
 		return nil, err
 	}
 
-	// // If the Tags field is a valid JSON array in the database, unmarshal it
-	// if product.Tags != nil {
-	// 	if err = json.Unmarshal(product.Tags, &product.Tags); err != nil {
+	// If the Tags field is a valid JSON array in the database, unmarshal it
+	// if len(product.Tags) > 0 {
+	// 	if err = json.Unmarshal(product.Tags, &tags); err != nil {
 	// 		return nil, fmt.Errorf("failed to unmarshal tags")
 	// 	}
 	// }
@@ -163,11 +191,6 @@ func (s *Store) DeactivateProduct(id string) error {
 
 // DecreaseProductStock implements rports.ProductStore.
 func (s *Store) DecreaseProductStock(id string, quantity int) error {
-	panic("unimplemented")
-}
-
-// DeleteProductByID implements rports.ProductStore.
-func (s *Store) DeleteProductByID(id string) error {
 	panic("unimplemented")
 }
 
