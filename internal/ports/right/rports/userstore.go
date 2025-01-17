@@ -6,6 +6,6 @@ import (
 
 type UserStore interface {
 	GetUserByEmail(email string) (*entity.User, error)
-	GetUserByID(id int) (*entity.User, error)
+	GetUserByID(id string) (*entity.User, error)
 	CreateUser(user entity.User) error
 }
