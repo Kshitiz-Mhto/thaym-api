@@ -6,8 +6,10 @@ import (
 	"net/http"
 
 	"ecom-api/internal/adapters/framework/left/services/auth/token"
+	"ecom-api/internal/adapters/framework/left/services/cart"
 	"ecom-api/internal/adapters/framework/left/services/product"
 	"ecom-api/internal/adapters/framework/left/services/user"
+	order "ecom-api/internal/adapters/framework/right/order_repo"
 	"ecom-api/internal/adapters/framework/right/product_repo"
 	"ecom-api/internal/adapters/framework/right/user_repo"
 
@@ -39,6 +41,11 @@ func (api *APIServer) Run() error {
 	productStore := product_repo.NewStore(api.db)
 	productHandler := product.NewProductHandler(productStore, userStore)
 	productHandler.RegisterRoutes(subrouter)
+
+	orderStore := order.NewStore(api.db)
+
+	cartHandler := cart.NewCartHandler(productStore, orderStore, userStore)
+	cartHandler.RegisterRoutes(subrouter)
 
 	log.Println("Listening to ", api.addr)
 	return http.ListenAndServe(api.addr, router)
