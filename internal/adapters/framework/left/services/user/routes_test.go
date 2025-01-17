@@ -15,7 +15,7 @@ import (
 
 func TestUserServiceHandlers(t *testing.T) {
 	userStore := &mockUserStore{}
-	handler := NewUserHandler(userStore)
+	handler := NewUserHandler(userStore, nil)
 
 	t.Run("should fail if user payload is invalid", func(t *testing.T) {
 		payload := payloads.RegisterUserPayload{
@@ -108,7 +108,7 @@ func TestUserServiceHandlers(t *testing.T) {
 
 type mockUserStore struct{}
 
-func (m *mockUserStore) GetUserByID(id int) (*entity.User, error) {
+func (m *mockUserStore) GetUserByID(id string) (*entity.User, error) {
 	return &entity.User{}, nil
 }
 

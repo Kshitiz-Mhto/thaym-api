@@ -3,7 +3,6 @@ package user
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"ecom-api/internal/adapters/framework/left/services/auth"
@@ -175,15 +174,9 @@ func (h *UserHandler) handleRegisterConfirmation(w http.ResponseWriter, r *http.
 
 func (h *UserHandler) handleGetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	str, ok := vars["userID"]
+	userID, ok := vars["userID"]
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing user ID"))
-		return
-	}
-
-	userID, err := strconv.Atoi(str)
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid user ID"))
 		return
 	}
 

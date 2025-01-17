@@ -6,7 +6,7 @@ import (
 
 type Order struct {
 	ID            string    `json:"id"`                        // Unique identifier for the order
-	UserID        int       `json:"userID"`                    // Foreign key to associate with the user
+	UserID        string    `json:"userID"`                    // Foreign key to associate with the user
 	Total         float64   `json:"total"`                     // Total amount for the order
 	Subtotal      float64   `json:"subtotal"`                  // Subtotal before tax and discounts
 	Status        string    `json:"status"`                    // Order status (e.g., "Pending", "Shipped", "Delivered", "Cancelled")
