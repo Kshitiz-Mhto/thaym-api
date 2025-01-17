@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS orderitems (
   `quantity` INT UNSIGNED NOT NULL,               -- Quantity ordered, minimum of 1
   `price` DECIMAL(10, 2) NOT NULL,                -- Price per unit
   `totalPrice` DECIMAL(10, 2) NOT NULL,           -- Calculated total price (Quantity * Price)
+  `subTotal` DECIMAL(10, 2) NOT NULL,
   `currency` CHAR(3) NOT NULL,                    -- ISO 4217 currency code
   `discount` DECIMAL(10, 2) NOT NULL DEFAULT 0,   -- Discount applied to this item
   `tax` DECIMAL(10, 2) NOT NULL DEFAULT 0,        -- Tax applied to this item

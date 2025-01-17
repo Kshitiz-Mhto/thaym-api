@@ -3,8 +3,6 @@ CREATE TABLE IF NOT EXISTS orders (
   `userId` CHAR(36) NOT NULL,                         -- Foreign key to associate with the user
   `total` DECIMAL(10, 2) NOT NULL,                    -- Total amount for the order
   `subtotal` DECIMAL(10, 2) NOT NULL,                 -- Subtotal before tax and discounts
-  `tax` DECIMAL(10, 2) NOT NULL,                      -- Total tax for the order
-  `discount` DECIMAL(10, 2) NOT NULL,                 -- Total discount for the order
   `status` ENUM('pending', 'processing', 'shipped', 'completed', 'cancelled', 'refunded') 
       NOT NULL DEFAULT 'pending',                    -- Order status
   `paymentStatus` ENUM('pending', 'paid', 'refunded') 
