@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -54,4 +55,24 @@ func GetTokenFromRequest(r *http.Request) string {
 
 func GenerateRandomUniqueIdentifier() string {
 	return uuid.New().String()
+}
+
+func DecodeTheByteData(encodedStr string) []string {
+
+	var decodedArray []string
+
+	// Decode the Base64 string
+	decodedBytes, err := base64.StdEncoding.DecodeString(encodedStr)
+	if err != nil {
+		fmt.Println("Error decoding base64:", err)
+		return nil
+	}
+
+	// Decode JSON array
+	if err := json.Unmarshal(decodedBytes, &decodedArray); err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+		return nil
+	}
+
+	return decodedArray
 }
