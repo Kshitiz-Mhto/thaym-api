@@ -16,20 +16,13 @@ func NewStore(db *sql.DB) *Store {
 }
 
 func (store *Store) CreateOrder(order entity.Order) (string, error) {
-	res, err := store.db.Exec("INSERT INTO orders (userId, total, subtotal, status, paymentStatus, paymentMethod, address, currency) VALUES (?,?,?,?,?,?,?,?)", order.UserID, order.Total, order.Subtotal, order.Status, order.PaymentStatus, order.PaymentMethod, order.Address, order.Currency)
+	_, err := store.db.Exec("INSERT INTO orders (userId, total, subtotal, status, paymentStatus, paymentMethod, address, currency) VALUES (?,?,?,?,?,?,?,?)", order.UserID, order.Total, order.Subtotal, order.Status, order.PaymentStatus, order.PaymentMethod, order.Address, order.Currency)
 	if err != nil {
 		return "", err
 	}
 
-	// Retrieve the generated UUID for the order
-	orderID, err := res.LastInsertId() // Retrieves the last inserted ID
-	if err != nil {
-		return "", fmt.Errorf("failed to retrieve order ID: %w", err)
-	}
-
-	// In case of UUIDs, MySQL auto-generates, so need a query to fetch the UUID.
 	var uuid string
-	err = store.db.QueryRow("SELECT id FROM orders WHERE id = ?", orderID).Scan(&uuid)
+	err = store.db.QueryRow("SELECT id FROM orders ORDER BY createdAt DESC LIMIT 1").Scan(&uuid)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch order UUID: %w", err)
 	}
