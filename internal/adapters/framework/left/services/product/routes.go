@@ -104,31 +104,35 @@ func (handler *ProductHandler) handleGetMultipleSelectiveProduct(w http.Response
 }
 
 func (handler *ProductHandler) handleCreateProduct(w http.ResponseWriter, r *http.Request) {
-	var product payloads.CreateProductPayload
+	var products []payloads.CreateProductPayload
 
 	if r.Method != http.MethodPost {
 		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
 		return
 	}
 
-	if err := utils.ParseJSON(r, &product); err != nil {
+	if err := utils.ParseJSON(r, &products); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	if err := utils.Validate.Struct(product); err != nil {
-		errors := err.(validator.ValidationErrors)
-		utils.WriteError(w, http.StatusBadRequest, errors)
-		return
+	for _, product := range products {
+		if err := utils.Validate.Struct(product); err != nil {
+			errors := err.(validator.ValidationErrors)
+			utils.WriteError(w, http.StatusBadRequest, errors)
+			return
+		}
 	}
 
-	err := handler.store.CreateProduct(product)
-	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
-		return
+	for _, product := range products {
+		err := handler.store.CreateProduct(product)
+		if err != nil {
+			utils.WriteError(w, http.StatusInternalServerError, err)
+			return
+		}
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, product, nil)
+	utils.WriteJSON(w, http.StatusCreated, products, nil)
 }
 
 func (handler *ProductHandler) handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
