@@ -2,6 +2,7 @@ package user_repo
 
 import (
 	"database/sql"
+	"fmt"
 
 	"ecom-api/internal/application/core/types/entity"
 )
@@ -17,7 +18,7 @@ func NewStore(db *sql.DB) *Store {
 func (s *Store) CreateUser(user entity.User) error {
 	_, err := s.db.Exec("INSERT INTO users (firstName, lastName, email, password, isVerified) VALUES (?, ?, ?, ?, ?)", user.FirstName, user.LastName, user.Email, user.Password, user.IsVerified)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to retreive users: %w", err)
 	}
 
 	return nil
@@ -26,7 +27,7 @@ func (s *Store) CreateUser(user entity.User) error {
 func (s *Store) GetUserByEmail(email string) (*entity.User, error) {
 	rows, err := s.db.Query("SELECT * FROM users WHERE email = ?", email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query users by email: %w", err)
 	}
 
 	defer rows.Close()
@@ -55,7 +56,7 @@ func (s *Store) GetUserByEmail(email string) (*entity.User, error) {
 func (s *Store) GetUserByID(id string) (*entity.User, error) {
 	rows, err := s.db.Query("SELECT * FROM users WHERE id = ?", id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query users by id: %w", err)
 	}
 
 	defer rows.Close()
@@ -73,6 +74,39 @@ func (s *Store) GetUserByID(id string) (*entity.User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *Store) GetUsersByRole(role string) ([]*entity.User, error) {
+	rows, err := s.db.Query("SELECT * FROM users WHERE role = ?", role)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query users by role: %w", err)
+	}
+
+	defer rows.Close()
+
+	var users []*entity.User
+
+	for rows.Next() {
+		user, err := scanRowsIntoUser(rows)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (s *Store) SetUserLocking(userEmail string, isLocked bool) error {
+	_, err := s.db.Exec("UPDATE users SET isLocked = ? WHERE email = ?", isLocked, userEmail)
+
+	if err != nil {
+		return fmt.Errorf("failed to lock user: %w", err)
+	}
+	return nil
 }
 
 func scanRowsIntoUser(rows *sql.Rows) (*entity.User, error) {
