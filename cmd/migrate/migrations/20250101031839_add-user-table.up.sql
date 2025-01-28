@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users(
   `email` VARCHAR(255) NOT NULL,
   `password` CHAR(60) NOT NULL, -- For storing bcrypt hashed passwords
   `isVerified` BOOLEAN NOT NULL DEFAULT FALSE, -- Whether the email is verified
-  `role` ENUM('user', 'admin') NOT NULL DEFAULT 'user', -- Role-based access control
+  `role` ENUM('user', 'admin', 'storeowner') NOT NULL DEFAULT 'user', -- Role-based access control
   `isLocked` BOOLEAN NOT NULL DEFAULT FALSE, -- Lock the account if needed
   `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

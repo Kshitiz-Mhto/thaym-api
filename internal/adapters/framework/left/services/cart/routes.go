@@ -27,7 +27,11 @@ func NewCartHandler(store rports.ProductStore, orderStore rports.OrderStore, use
 }
 
 func (handler *CartHandler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/cart/checkout", auth.WithJWTAuth(handler.handleCartCheckout, handler.userStore)).Methods(http.MethodPost)
+	router.HandleFunc("/cart/checkout", auth.WithJWTAuth(handler.handleCartCheckout, handler.userStore, "admin", "storeowner", "owner")).Methods(http.MethodPost)
+	router.HandleFunc("/cart/delete_orderitem/{orderItemId}", auth.WithJWTAuth(handler.handleOrderItemDeletion, handler.userStore, "admin", "storeowner", "owner")).Methods(http.MethodPost)
+
+	router.HandleFunc("/delete_order/{orderId}", auth.WithJWTAuth(handler.handleOrderDeletion, handler.userStore, "admin", "storeowner", "owner")).Methods(http.MethodPost)
+
 }
 
 func (handler *CartHandler) handleCartCheckout(w http.ResponseWriter, r *http.Request) {
@@ -75,4 +79,51 @@ func (handler *CartHandler) handleCartCheckout(w http.ResponseWriter, r *http.Re
 		"total_price_before_tax_and_dis": subTotalPrice,
 		"order_id":                       orderId,
 	}, nil)
+}
+
+func (handler *CartHandler) handleOrderDeletion(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	orderId, ok := vars["orderId"]
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing order ID"))
+		return
+	}
+
+	err := handler.orderStore.DeleteOrder(orderId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusCreated, map[string]string{"orderId": orderId}, nil)
+
+}
+
+func (handler *CartHandler) handleOrderItemDeletion(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	orderItemId, ok := vars["orderItemId"]
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing order ID"))
+		return
+	}
+
+	err := handler.orderStore.DeleteOrder(orderItemId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusCreated, map[string]string{"orderItemId": orderItemId}, nil)
 }

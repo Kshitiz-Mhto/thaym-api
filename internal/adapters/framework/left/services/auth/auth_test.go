@@ -10,7 +10,7 @@ import (
 func TestCreateJWT(t *testing.T) {
 
 	secret := []byte("secret")
-	token, err := CreateJWT(secret, "abc")
+	token, err := CreateJWT(secret, "abc", "admin")
 
 	require.NoError(t, err, "error creating JWT")
 

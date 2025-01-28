@@ -19,7 +19,7 @@ type contextKey string
 const UserKey contextKey = "userID"
 
 // middleware function that validates the JWT token
-func WithJWTAuth(handlerFunc http.HandlerFunc, store rports.UserStore) http.HandlerFunc {
+func WithJWTAuth(handlerFunc http.HandlerFunc, store rports.UserStore, allowedRoles ...string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := utils.GetTokenFromRequest(r) // extracts the token from the request header.
 
@@ -38,6 +38,13 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store rports.UserStore) http.Hand
 
 		claims := token.Claims.(jwt.MapClaims)
 		userID := claims["userID"].(string)
+		userRole := claims["userRole"].(string)
+
+		if !isRoleAllowed(userRole, allowedRoles) {
+			log.Printf("role %s not authorized for this endpoint", userRole)
+			permissionDenied(w)
+			return
+		}
 
 		u, err := store.GetUserByID(userID)
 		if err != nil {
@@ -56,11 +63,12 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store rports.UserStore) http.Hand
 	}
 }
 
-func CreateJWT(secret []byte, userID string) (string, error) {
+func CreateJWT(secret []byte, userID, userRole string) (string, error) {
 	expiration := time.Second * time.Duration(configs.Envs.JWTExpirationInSeconds)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userID":    string(userID),
+		"userRole":  string(userRole),
 		"expiresAt": time.Now().Add(expiration).Unix(),
 	})
 
@@ -93,4 +101,13 @@ func GetUserIDFromContext(ctx context.Context) string {
 	}
 
 	return userID
+}
+
+func isRoleAllowed(userRole string, allowedRoles []string) bool {
+	for _, role := range allowedRoles {
+		if userRole == role {
+			return true
+		}
+	}
+	return false
 }

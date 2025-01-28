@@ -29,9 +29,9 @@ func (handler *ProductHandler) RegisterRoutes(router *mux.Router) {
 	// GET /selectiveproducts?ids=1,2,3
 	router.HandleFunc("/selectiveproducts", handler.handleGetMultipleSelectiveProduct).Methods(http.MethodGet)
 	//admin route
-	router.HandleFunc("/create_product", auth.WithJWTAuth(handler.handleCreateProduct, handler.userStore)).Methods(http.MethodPost)
-	router.HandleFunc("/delete_product/{productId}", auth.WithJWTAuth(handler.handleDeleteProduct, handler.userStore)).Methods(http.MethodPost)
-	router.HandleFunc("/update_product/{productId}", auth.WithJWTAuth(handler.handleUpdateProductById, handler.userStore)).Methods(http.MethodPost)
+	router.HandleFunc("/create_product", auth.WithJWTAuth(handler.handleCreateProduct, handler.userStore, "storeowner")).Methods(http.MethodPost)
+	router.HandleFunc("/delete_product/{productId}", auth.WithJWTAuth(handler.handleDeleteProduct, handler.userStore, "storeowner")).Methods(http.MethodPost)
+	router.HandleFunc("/update_product/{productId}", auth.WithJWTAuth(handler.handleUpdateProductById, handler.userStore, "storeowner")).Methods(http.MethodPost)
 }
 
 func (handler *ProductHandler) handleGetProducts(w http.ResponseWriter, r *http.Request) {

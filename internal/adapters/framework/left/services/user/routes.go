@@ -32,7 +32,9 @@ func (handler *UserHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/register_confirm", handler.handleRegisterConfirmation).Methods(http.MethodPost)
 
 	//admin routes
-	router.HandleFunc("/users/{userID}", auth.WithJWTAuth(handler.handleGetUser, handler.store)).Methods(http.MethodGet)
+	router.HandleFunc("/users/{userID}", auth.WithJWTAuth(handler.handleGetUser, handler.store, "admin")).Methods(http.MethodGet)
+	router.HandleFunc("/users/{userRole}", auth.WithJWTAuth(handler.handleGetUsersBYRole, handler.store, "admin")).Methods(http.MethodGet)
+	router.HandleFunc("/user/lock/{userEmail}", auth.WithJWTAuth(handler.handleUserLocking, handler.store, "admin")).Methods(http.MethodPost)
 }
 
 func (h *UserHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +71,7 @@ func (h *UserHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	secret := []byte(configs.Envs.JWTSecret)
 
-	token, err := auth.CreateJWT(secret, u.ID)
+	token, err := auth.CreateJWT(secret, u.ID, u.Role)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -163,6 +165,7 @@ func (h *UserHandler) handleRegisterConfirmation(w http.ResponseWriter, r *http.
 		LastName:   user.LastName,
 		Email:      user.Email,
 		Password:   hashedPassword,
+		Role:       user.Role,
 		IsVerified: true,
 	})
 	if err != nil {
@@ -173,6 +176,12 @@ func (h *UserHandler) handleRegisterConfirmation(w http.ResponseWriter, r *http.
 }
 
 func (h *UserHandler) handleGetUser(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodGet {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
 	vars := mux.Vars(r)
 	userID, ok := vars["userID"]
 	if !ok {
@@ -187,4 +196,49 @@ func (h *UserHandler) handleGetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSON(w, http.StatusOK, user, nil)
+}
+
+func (h *UserHandler) handleGetUsersBYRole(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	userRole, ok := vars["userRole"]
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing user role"))
+		return
+	}
+
+	users, err := h.store.GetUsersByRole(userRole)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, users, nil)
+}
+
+func (h *UserHandler) handleUserLocking(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	userEmail, ok := vars["userEmail"]
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing user role"))
+		return
+	}
+
+	err := h.store.SetUserLocking(userEmail, true)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("failed to lock user: %v", err))
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{"message": "User locked successfully", "email": userEmail, "isLocked": true}, nil)
 }

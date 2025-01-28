@@ -108,6 +108,16 @@ func TestUserServiceHandlers(t *testing.T) {
 
 type mockUserStore struct{}
 
+// SetUserLocking implements rports.UserStore.
+func (m *mockUserStore) SetUserLocking(email string, isLocked bool) error {
+	panic("unimplemented")
+}
+
+// GetUsersByRole implements rports.UserStore.
+func (m *mockUserStore) GetUsersByRole(role string) ([]*entity.User, error) {
+	panic("unimplemented")
+}
+
 func (m *mockUserStore) GetUserByID(id string) (*entity.User, error) {
 	return &entity.User{}, nil
 }
