@@ -29,6 +29,7 @@ type RegisterUserConfirmationPayload struct {
 	LastName  string `json:"lastName" validate:"required"`
 	Email     string `json:"email" validate:"required,email"`
 	Password  string `json:"password" validate:"required,min=5,max=130"`
+	Role      string `json:"role"`
 	Token     string `json:"token" validate:"required"`
 }
 
