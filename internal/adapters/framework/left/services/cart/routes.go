@@ -2,6 +2,7 @@ package cart
 
 import (
 	"ecom-api/internal/adapters/framework/left/services/auth"
+	"ecom-api/internal/application/core/types/entity"
 	"ecom-api/internal/application/core/types/entity/payloads"
 	"ecom-api/internal/ports/right/rports"
 	"ecom-api/utils"
@@ -27,10 +28,14 @@ func NewCartHandler(store rports.ProductStore, orderStore rports.OrderStore, use
 }
 
 func (handler *CartHandler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/cart/checkout", auth.WithJWTAuth(handler.handleCartCheckout, handler.userStore, "admin", "storeowner", "owner")).Methods(http.MethodPost)
-	router.HandleFunc("/cart/delete_orderitem/{orderItemId}", auth.WithJWTAuth(handler.handleOrderItemDeletion, handler.userStore, "admin", "storeowner", "owner")).Methods(http.MethodPost)
+	router.HandleFunc("/cart/checkout", auth.WithJWTAuth(handler.handleCartCheckout, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodPost)
+	router.HandleFunc("/cart/delete_orderitem/{orderItemId}", auth.WithJWTAuth(handler.handleOrderItemDeletion, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodDelete)
 
-	router.HandleFunc("/delete_order/{orderId}", auth.WithJWTAuth(handler.handleOrderDeletion, handler.userStore, "admin", "storeowner", "owner")).Methods(http.MethodPost)
+	router.HandleFunc("/delete_order/{orderId}", auth.WithJWTAuth(handler.handleOrderDeletion, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodDelete)
+
+	router.HandleFunc("/order/{orderId}", auth.WithJWTAuth(handler.handleGetOrderById, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodGet)
+	router.HandleFunc("/order/{userId}", auth.WithJWTAuth(handler.handleGetOrderByUserId, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodGet)
+	router.HandleFunc("/orderitem/{orderId}", auth.WithJWTAuth(handler.handleGetOrderItemByOrderId, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodGet)
 
 }
 
@@ -83,7 +88,7 @@ func (handler *CartHandler) handleCartCheckout(w http.ResponseWriter, r *http.Re
 
 func (handler *CartHandler) handleOrderDeletion(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodDelete {
 		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
 		return
 	}
@@ -107,7 +112,7 @@ func (handler *CartHandler) handleOrderDeletion(w http.ResponseWriter, r *http.R
 
 func (handler *CartHandler) handleOrderItemDeletion(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodDelete {
 		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
 		return
 	}
@@ -120,10 +125,79 @@ func (handler *CartHandler) handleOrderItemDeletion(w http.ResponseWriter, r *ht
 		return
 	}
 
-	err := handler.orderStore.DeleteOrder(orderItemId)
+	err := handler.orderStore.DeleteOrderItem(orderItemId)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusCreated, map[string]string{"orderItemId": orderItemId}, nil)
+}
+
+func (handler *CartHandler) handleGetOrderById(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	vars := mux.Vars(r)
+	orderId, ok := vars["orderId"]
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing order ID"))
+		return
+	}
+
+	order, err := handler.orderStore.GetOrderByID(orderId)
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, order, nil)
+}
+
+func (handler *CartHandler) handleGetOrderByUserId(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	vars := mux.Vars(r)
+	userId, ok := vars["userId"]
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing user ID"))
+		return
+	}
+
+	var orders []*entity.Order
+	var err error
+
+	orders, err = handler.orderStore.GetOrdersByUserID(userId)
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, orders, nil)
+}
+
+func (handler *CartHandler) handleGetOrderItemByOrderId(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	vars := mux.Vars(r)
+	orderId, ok := vars["orderId"]
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing order ID"))
+		return
+	}
+
+	var orderitems []*entity.OrderItem
+	var err error
+
+	orderitems, err = handler.orderStore.GetOrderItemsByOrderId(orderId)
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, orderitems, nil)
 }

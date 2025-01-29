@@ -33,7 +33,7 @@ func (handler *UserHandler) RegisterRoutes(router *mux.Router) {
 
 	//admin routes
 	router.HandleFunc("/users/{userID}", auth.WithJWTAuth(handler.handleGetUser, handler.store, "admin")).Methods(http.MethodGet)
-	router.HandleFunc("/users/{userRole}", auth.WithJWTAuth(handler.handleGetUsersBYRole, handler.store, "admin")).Methods(http.MethodGet)
+	router.HandleFunc("/filter_users/{userRole}", auth.WithJWTAuth(handler.handleGetUsersByRole, handler.store, "admin")).Methods(http.MethodGet)
 	router.HandleFunc("/user/lock/{userEmail}", auth.WithJWTAuth(handler.handleUserLocking, handler.store, "admin")).Methods(http.MethodPost)
 }
 
@@ -105,7 +105,7 @@ func (h *UserHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	//Check for Existing User
 	_, err := h.store.GetUserByEmail(user.Email)
 	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("user with email %s already exists", user.Email))
+		utils.WriteError(w, http.StatusConflict, fmt.Errorf("user with email %s already exists", user.Email))
 		return
 	}
 
@@ -198,7 +198,7 @@ func (h *UserHandler) handleGetUser(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, user, nil)
 }
 
-func (h *UserHandler) handleGetUsersBYRole(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) handleGetUsersByRole(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
 		return
@@ -234,7 +234,13 @@ func (h *UserHandler) handleUserLocking(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err := h.store.SetUserLocking(userEmail, true)
+	userExists, err := h.store.GetUserByEmail(userEmail)
+	if err != nil || userExists == nil {
+		utils.WriteError(w, http.StatusNotFound, fmt.Errorf("user with email %s not found", userEmail))
+		return
+	}
+
+	err = h.store.SetUserLocking(userEmail, true)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("failed to lock user: %v", err))
 		return
