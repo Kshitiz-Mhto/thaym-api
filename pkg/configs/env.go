@@ -21,6 +21,8 @@ type Config struct {
 	FromEmailPassword      string
 	FromEmailSMTP          string
 	SMTPAddress            string
+	StripeSecretKey        string
+	StripePublshableKey    string
 }
 
 var Envs = initConfig()
@@ -40,6 +42,8 @@ func initConfig() Config {
 		FromEmailPassword:      getEnv("FROM_EMAIL_PASSWORD", ""),
 		FromEmailSMTP:          getEnv("FROM_EMAIL_SMTP", "smtp.gmail.com"),
 		SMTPAddress:            getEnv("SMTP_ADDR", "smtp.gmail.com:587"),
+		StripeSecretKey:        getEnv("SECRET_KEY_STRIPE", ""),
+		StripePublshableKey:    getEnv("PUBLISHABLE_KEY_STRIPE", ""),
 	}
 }
 
