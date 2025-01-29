@@ -83,7 +83,7 @@ func (handler *CartHandler) createOrder(products []entity.Product, cartItems []e
 		PaymentStatus: "pending",
 		PaymentMethod: "Credit Card",
 		Address:       "Nepal, Bharatpur 44200",
-		Currency:      "NRs",
+		Currency:      "usd",
 	})
 
 	if err != nil {

@@ -31,7 +31,7 @@ func (handler *CartHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/cart/checkout", auth.WithJWTAuth(handler.handleCartCheckout, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodPost)
 	router.HandleFunc("/cart/delete_orderitem/{orderItemId}", auth.WithJWTAuth(handler.handleOrderItemDeletion, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodDelete)
 
-	router.HandleFunc("/delete_order/{orderId}", auth.WithJWTAuth(handler.handleOrderDeletion, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodDelete)
+	router.HandleFunc("/order/delete/{orderId}", auth.WithJWTAuth(handler.handleOrderDeletion, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodDelete)
 
 	router.HandleFunc("/order/{orderId}", auth.WithJWTAuth(handler.handleGetOrderById, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodGet)
 	router.HandleFunc("/order/{userId}", auth.WithJWTAuth(handler.handleGetOrderByUserId, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodGet)
