@@ -9,6 +9,7 @@ import (
 	"ecom-api/pkg/configs"
 
 	"github.com/go-sql-driver/mysql"
+	stripe "github.com/stripe/stripe-go"
 )
 
 func main() {
@@ -21,6 +22,9 @@ func main() {
 		AllowNativePasswords: true,
 		ParseTime:            true,
 	}
+
+	stripe.Key = configs.Envs.StripeSecretKey
+
 	dbAdapter, err := db.NewDbAdapter(cfg)
 	if err != nil {
 		log.Fatalf("%v", err)
