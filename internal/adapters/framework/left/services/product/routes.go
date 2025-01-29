@@ -25,13 +25,13 @@ func NewProductHandler(store rports.ProductStore, userStore rports.UserStore) *P
 
 func (handler *ProductHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/products", handler.handleGetProducts).Methods(http.MethodGet)
-	router.HandleFunc("/products/{productId}", handler.handleGetProduct).Methods(http.MethodGet)
+	router.HandleFunc("/product/{productId}", handler.handleGetProduct).Methods(http.MethodGet)
 	// GET /selectiveproducts?ids=1,2,3
 	router.HandleFunc("/selectiveproducts", handler.handleGetMultipleSelectiveProduct).Methods(http.MethodGet)
 	//admin route
-	router.HandleFunc("/create_product", auth.WithJWTAuth(handler.handleCreateProduct, handler.userStore, "storeowner")).Methods(http.MethodPost)
-	router.HandleFunc("/delete_product/{productId}", auth.WithJWTAuth(handler.handleDeleteProduct, handler.userStore, "storeowner")).Methods(http.MethodPost)
-	router.HandleFunc("/update_product/{productId}", auth.WithJWTAuth(handler.handleUpdateProductById, handler.userStore, "storeowner")).Methods(http.MethodPost)
+	router.HandleFunc("/products", auth.WithJWTAuth(handler.handleCreateProducts, handler.userStore, "admin", "storeowner")).Methods(http.MethodPost)
+	router.HandleFunc("/delete_product/{productId}", auth.WithJWTAuth(handler.handleDeleteProduct, handler.userStore, "admin", "storeowner")).Methods(http.MethodDelete)
+	router.HandleFunc("/update_product/{productId}", auth.WithJWTAuth(handler.handleUpdateProductById, handler.userStore, "admin", "storeowner")).Methods(http.MethodPut)
 }
 
 func (handler *ProductHandler) handleGetProducts(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +44,7 @@ func (handler *ProductHandler) handleGetProducts(w http.ResponseWriter, r *http.
 	products, err := handler.store.GetAllProducts()
 
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, http.StatusNotFound, err)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (handler *ProductHandler) handleGetProduct(w http.ResponseWriter, r *http.R
 	// decodedProductTags := utils.DecodeTheByteData(string(product.Tags))
 
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, http.StatusNotFound, err)
 		return
 	}
 
@@ -96,14 +96,14 @@ func (handler *ProductHandler) handleGetMultipleSelectiveProduct(w http.Response
 
 	products, err := handler.store.GetProductsByIDs(ids)
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, http.StatusNotFound, err)
 		return
 	}
 
 	utils.WriteJSON(w, http.StatusOK, products, nil)
 }
 
-func (handler *ProductHandler) handleCreateProduct(w http.ResponseWriter, r *http.Request) {
+func (handler *ProductHandler) handleCreateProducts(w http.ResponseWriter, r *http.Request) {
 	var products []payloads.CreateProductPayload
 
 	if r.Method != http.MethodPost {
@@ -137,7 +137,7 @@ func (handler *ProductHandler) handleCreateProduct(w http.ResponseWriter, r *htt
 
 func (handler *ProductHandler) handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodDelete {
 		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
 		return
 	}
@@ -156,12 +156,12 @@ func (handler *ProductHandler) handleDeleteProduct(w http.ResponseWriter, r *htt
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, productId, nil)
+	utils.WriteJSON(w, http.StatusNoContent, productId, nil)
 }
 
 func (handler *ProductHandler) handleUpdateProductById(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodPut {
 		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
 		return
 	}
@@ -173,7 +173,13 @@ func (handler *ProductHandler) handleUpdateProductById(w http.ResponseWriter, r 
 		return
 	}
 
-	err := handler.store.UpdateProductByID(productId)
+	_, err := handler.store.GetProductByID(productId)
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, fmt.Errorf("product not found"))
+		return
+	}
+
+	err = handler.store.UpdateProductByID(productId)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
