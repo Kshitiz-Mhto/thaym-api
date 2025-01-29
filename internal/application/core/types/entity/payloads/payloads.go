@@ -41,3 +41,28 @@ type LoginUserPayload struct {
 type CartCheckoutPayload struct {
 	Items []entity.CartCheckoutItem `json:"items" validate:"required,dive,required"` // List of items in the cart, each item is required
 }
+type CustomerPayload struct {
+	Email       string            `json:"email" validate:"required,email"`
+	Name        string            `json:"name" validate:"required"`
+	Balance     int64             `json:"balance" validate:"gte=0"`
+	Phone       string            `json:"phone" validate:"required,e164"`
+	Description string            `json:"description,omitempty" validat:"omitempty"`
+	Metadata    map[string]string `json:"metadata,omitempty" validat:"omitempty"`
+	Address     Address           `json:"address" validate:"required"`
+	Shipping    Shipping          `json:"shipping,omitempty" validate:"omitempty"`
+}
+
+type Address struct {
+	City       string `json:"city,omitempty" validate:"omitempty"`
+	Country    string `json:"country,omitempty" validate:"omitempty"`
+	Line1      string `json:"line1,omitempty" validate:"omitempty"`
+	Line2      string `json:"line2,omitempty" validate:"omitempty"`
+	PostalCode string `json:"postal_code,omitempty" validate:"omitempty,numeric"`
+	State      string `json:"state,omitempty" validate:"omitempty"`
+}
+
+type Shipping struct {
+	Name    string  `json:"name" validate:"required"`
+	Phone   string  `json:"phone" validate:"required,e164"`
+	Address Address `json:"address" validate:"required"`
+}
