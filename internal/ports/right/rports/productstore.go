@@ -16,8 +16,9 @@ type ProductStore interface {
 	UpdateProductByID(id string) error                         // Update a product by its ID
 
 	// Filtering and searching
-	GetProductsByCategory(category string) ([]entity.Product, error) // Fetch products by category
-	SearchProducts(query string) ([]entity.Product, error)           // Search products by name, description, or tags
+	GetProductsByCategory(category string) ([]*entity.Product, error) // Fetch products by category
+	SearchProducts(query string) ([]*entity.Product, error)           // Search products by name, description, or tags
+	GetProductsByStoreOwner(storeId string) ([]*entity.Product, error)
 
 	// Inventory management
 	UpdateProductQuantity(id string, quantity int) error // Update the quantity of a product

@@ -5,6 +5,7 @@ import (
 	"ecom-api/internal/application/core/types/entity"
 	"ecom-api/internal/application/core/types/entity/payloads"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -149,6 +150,213 @@ func (s *Store) UpdateProductByID(productId string) error {
 	return nil
 }
 
+// ActivateProduct implements rports.ProductStore.
+func (s *Store) ActivateProduct(id string) error {
+	result, err := s.db.Exec("UPDATE products SET isActive = ? WHERE productId = ?", true, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.New("no product found with the given ID")
+	}
+
+	return nil
+}
+
+// DeactivateProduct implements rports.ProductStore.
+func (s *Store) DeactivateProduct(id string) error {
+	result, err := s.db.Exec("UPDATE products SET isActive = ? WHERE id = ?", false, id)
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.New("no product found with the given ID")
+	}
+
+	return nil
+}
+
+func (s *Store) DecreaseProductStock(id string, quantity int) error {
+	if quantity <= 0 {
+		return errors.New("quantity must be greater than zero")
+	}
+
+	var currentQuantity int
+	err := s.db.QueryRow("SELECT quantity FROM products WHERE productId = ?", id).Scan(&currentQuantity)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errors.New("product not found")
+		}
+		return err
+	}
+
+	if currentQuantity < quantity {
+		return fmt.Errorf("not enough stock: available %d, requested %d", currentQuantity, quantity)
+	}
+
+	_, err = s.db.Exec("UPDATE products SET quantity = ? WHERE productId = ?", currentQuantity-quantity, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetProductsByCategory implements rports.ProductStore.
+func (s *Store) GetProductsByCategory(category string) ([]*entity.Product, error) {
+	rows, err := s.db.Query("SELECT * FROM products WHERE category =?", category)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var products []*entity.Product
+
+	for rows.Next() {
+		product, err := scanRowsIntoProduct(rows)
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, product)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return products, nil
+}
+
+// IncreaseProductStock implements rports.ProductStore.
+func (s *Store) IncreaseProductStock(id string, quantity int) error {
+	if quantity <= 0 {
+		return errors.New("quantity must be greater than zero")
+	}
+
+	var currentQuantity int
+	err := s.db.QueryRow("SELECT quantity FROM products WHERE productId = ?", id).Scan(&currentQuantity)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errors.New("product not found")
+		}
+		return err
+	}
+
+	_, err = s.db.Exec("UPDATE products SET quantity = ? WHERE productId = ?", currentQuantity+quantity, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SearchProducts implements rports.ProductStore.
+func (s *Store) SearchProducts(query string) ([]*entity.Product, error) {
+	if query = strings.TrimSpace(query); query == "" {
+		return nil, errors.New("search query cannot be empty")
+	}
+
+	query = strings.ToLower(query)
+	products, err := s.GetAllProducts()
+	if err != nil {
+		return nil, err
+	}
+
+	results := []*entity.Product{}
+
+	for _, product := range products {
+		if containsIgnoreCase(product.Name, query) ||
+			containsIgnoreCase(product.Description, query) ||
+			containsIgnoreCase(product.Category, query) ||
+			tagsContain(product.Tags, query) {
+			results = append(results, product)
+		}
+	}
+
+	if len(results) == 0 {
+		return nil, errors.New("no products found")
+	}
+
+	return results, nil
+}
+
+// UpdateProductQuantity implements rports.ProductStore.
+func (s *Store) UpdateProductQuantity(id string, quantity int) error {
+	result, err := s.db.Exec("UPDATE products SET quantity = ? WHERE id = ?", quantity, id)
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.New("no product found with the given ID")
+	}
+
+	return nil
+}
+
+func (s *Store) GetProductsByStoreOwner(storeId string) ([]*entity.Product, error) {
+	rows, err := s.db.Query("SELECT * FROM products WHERE storeId =?", storeId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var products []*entity.Product
+	for rows.Next() {
+		product, err := scanRowsIntoProduct(rows)
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, product)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return products, nil
+}
+
+func containsIgnoreCase(source, query string) bool {
+	return strings.Contains(strings.ToLower(source), query)
+}
+
+func tagsContain(tagsData []byte, query string) bool {
+	var tags []string
+	if err := json.Unmarshal(tagsData, &tags); err != nil {
+		return false
+	}
+	for _, tag := range tags {
+		if containsIgnoreCase(tag, query) {
+			return true
+		}
+	}
+	return false
+}
+
 func scanRowsIntoProduct(rows *sql.Rows) (*entity.Product, error) {
 	product := new(entity.Product)
 	err := rows.Scan(
@@ -177,39 +385,4 @@ func scanRowsIntoProduct(rows *sql.Rows) (*entity.Product, error) {
 	// }
 
 	return product, err
-}
-
-// ActivateProduct implements rports.ProductStore.
-func (s *Store) ActivateProduct(id string) error {
-	panic("unimplemented")
-}
-
-// DeactivateProduct implements rports.ProductStore.
-func (s *Store) DeactivateProduct(id string) error {
-	panic("unimplemented")
-}
-
-// DecreaseProductStock implements rports.ProductStore.
-func (s *Store) DecreaseProductStock(id string, quantity int) error {
-	panic("unimplemented")
-}
-
-// GetProductsByCategory implements rports.ProductStore.
-func (s *Store) GetProductsByCategory(category string) ([]entity.Product, error) {
-	panic("unimplemented")
-}
-
-// IncreaseProductStock implements rports.ProductStore.
-func (s *Store) IncreaseProductStock(id string, quantity int) error {
-	panic("unimplemented")
-}
-
-// SearchProducts implements rports.ProductStore.
-func (s *Store) SearchProducts(query string) ([]entity.Product, error) {
-	panic("unimplemented")
-}
-
-// UpdateProductQuantity implements rports.ProductStore.
-func (s *Store) UpdateProductQuantity(id string, quantity int) error {
-	panic("unimplemented")
 }
