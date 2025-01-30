@@ -26,9 +26,35 @@ func (handler *PaymentHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/create/customer", auth.WithJWTAuth(handler.handleCustomerCreation, handler.userStore, "admin", "user")).Methods(http.MethodPost)
 	router.HandleFunc("/customer/{id}", auth.WithJWTAuth(handler.handleGetCustomerById, handler.userStore, "admin")).Methods(http.MethodGet)
 	router.HandleFunc("/customers", auth.WithJWTAuth(handler.handleGetCustomers, handler.userStore, "admin")).Methods(http.MethodGet)
+	router.HandleFunc("customer/delete/{customerId}", auth.WithJWTAuth(handler.handleCustomerDeletion, handler.userStore, "admin", "storeowner")).Methods(http.MethodPost)
 
 	router.HandleFunc("/payment_method/{customerId}", auth.WithJWTAuth(handler.handlePaymentMethodCreation, handler.userStore, "admin", "user")).Methods(http.MethodPost)
 	router.HandleFunc("/charges/{customerId}", auth.WithJWTAuth(handler.handleCustomeChargeProcess, handler.userStore, "admin", "user")).Methods(http.MethodPost)
+}
+
+func (handler *PaymentHandler) handleCustomerDeletion(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	if r.Method != http.MethodPost {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	customerId, ok := vars["customerId"]
+
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing customer ID"))
+		return
+	}
+
+	isDeleted, err := handler.paymentStore.DeleteCustomer(customerId)
+
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, map[string]bool{"isDeleted": isDeleted}, nil)
 }
 
 func (handler *PaymentHandler) handleCustomeChargeProcess(w http.ResponseWriter, r *http.Request) {

@@ -11,6 +11,7 @@ type PaymentStore interface {
 	CreateStripeCustomer(customerParams *payloads.CustomerPayload) (*stripe.Customer, error)
 	GetStripeCustomer(customerId string) (*stripe.Customer, error)
 	GetAllStripeCustomers() ([]stripe.Customer, error)
+	DeleteCustomer(customerId string) (bool, error)
 
 	//payment method
 	CreatePaymentMethod(customerId string) (*stripe.PaymentMethod, error)

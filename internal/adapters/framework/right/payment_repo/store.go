@@ -122,6 +122,17 @@ func (store *PaymentStore) CreateStripeCharge(chargeParams *payloads.CustomerCha
 	return charge, nil
 }
 
+func (store *PaymentStore) DeleteCustomer(id string) (bool, error) {
+	params := &stripe.CustomerParams{}
+	_, err := customer.Del(id, params)
+
+	if err != nil {
+		return false, fmt.Errorf("uable to delete customer: %v", err)
+	}
+
+	return true, nil
+}
+
 func mapAddressToStripe(address payloads.Address) *stripe.AddressParams {
 
 	return &stripe.AddressParams{
