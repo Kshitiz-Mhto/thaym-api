@@ -66,3 +66,19 @@ type Shipping struct {
 	Phone   string  `json:"phone" validate:"required,e164"`
 	Address Address `json:"address" validate:"required"`
 }
+
+type StripeCardPayload struct {
+	Number   string `json:"number" validate:"required"`
+	ExpMonth string `json:"exp_month" validate:"required"`
+	ExpYear  string `json:"exp_year" validate:"required"`
+	CVC      string `json:"cvc" validate:"required,numeric,len=3|len=4"`
+	Type     string `json:"type" validate:"required,oneof=card card_present fpx ideal sepa_debit au_becs_debit"`
+}
+
+type CustomerChargeRequest struct {
+	Amount       int64  `json:"amount" validate:"required"`
+	Currency     string `json:"currency" validate:"required"`
+	ReceiptEmail string `json:"receipt_email" validate:"required"`
+	Description  string `json:"description" validate:"required"`
+	Token        string `json:"token" validate:"required"`
+}

@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/charge"
 	"github.com/stripe/stripe-go/customer"
+	"github.com/stripe/stripe-go/paymentmethod"
 )
 
 type PaymentStore struct{}
@@ -70,6 +72,55 @@ func (store *PaymentStore) GetAllStripeCustomers() ([]stripe.Customer, error) {
 	return customers, nil
 }
 
+func (store *PaymentStore) CreatePaymentMethod(customerId string, card *payloads.StripeCardPayload) (*stripe.PaymentMethod, error) {
+	var params *stripe.PaymentMethodParams
+
+	if card.Type == "card" {
+		params = &stripe.PaymentMethodParams{
+			Type: stripe.String(card.Type),
+			Card: &stripe.PaymentMethodCardParams{
+				Number:   stripe.String(card.Number),
+				ExpMonth: stripe.String(card.ExpMonth),
+				ExpYear:  stripe.String(card.ExpYear),
+				CVC:      stripe.String(card.CVC),
+			},
+		}
+	} else {
+		return nil, fmt.Errorf("unsupported payment method type %s", card.Type)
+	}
+
+	paymentMethod, err := paymentmethod.New(params)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create payment method")
+	}
+
+	_, error := AttachCustomerPaymentMethod(customerId, paymentMethod.ID)
+
+	if error != nil {
+		return nil, fmt.Errorf("unable to attach payment method to customer %s", customerId)
+	}
+
+	return paymentMethod, nil
+}
+
+func (store *PaymentStore) CreateStripeCharge(chargeParams *payloads.CustomerChargeRequest, customerId string) (*stripe.Charge, error) {
+	params := &stripe.ChargeParams{
+		Amount:       stripe.Int64(chargeParams.Amount),
+		Currency:     stripe.String(chargeParams.Currency),
+		ReceiptEmail: stripe.String(chargeParams.ReceiptEmail),
+		Description:  stripe.String(chargeParams.Description),
+		Source:       &stripe.SourceParams{Token: stripe.String("tok_visa")},
+		Customer:     stripe.String(customerId),
+	}
+
+	charge, err := charge.New(params)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create charge")
+	}
+
+	return charge, nil
+}
+
 func mapAddressToStripe(address payloads.Address) *stripe.AddressParams {
 
 	return &stripe.AddressParams{
@@ -88,4 +139,23 @@ func mapShippingToStripe(shipping payloads.Shipping, address *stripe.AddressPara
 		Phone:   stripe.String(shipping.Phone),
 		Address: address,
 	}
+}
+
+func AttachCustomerPaymentMethod(customerId string, paymentMethodId string) (*stripe.PaymentMethod, error) {
+
+	params := &stripe.PaymentMethodAttachParams{
+		Customer: stripe.String(customerId),
+	}
+	paymentmethod, err := paymentmethod.Attach(
+		paymentMethodId,
+		params,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(paymentmethod)
+
+	return paymentmethod, nil
 }
