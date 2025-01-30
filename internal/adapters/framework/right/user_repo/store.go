@@ -16,7 +16,7 @@ func NewStore(db *sql.DB) *Store {
 }
 
 func (s *Store) CreateUser(user entity.User) error {
-	_, err := s.db.Exec("INSERT INTO users (firstName, lastName, email, password, isVerified) VALUES (?, ?, ?, ?, ?)", user.FirstName, user.LastName, user.Email, user.Password, user.IsVerified)
+	_, err := s.db.Exec("INSERT INTO users (firstName, lastName, email, password, isVerified, role) VALUES (?, ?, ?, ?, ?, ?)", user.FirstName, user.LastName, user.Email, user.Password, user.IsVerified, user.Role)
 	if err != nil {
 		return fmt.Errorf("failed to retreive users: %w", err)
 	}

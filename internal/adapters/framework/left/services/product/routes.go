@@ -32,16 +32,16 @@ func (handler *ProductHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/selectiveproducts", handler.handleGetMultipleSelectiveProduct).Methods(http.MethodGet)
 
 	//filtering-searching
-	router.HandleFunc("/products/{category}", handler.handleFilteringByCategory).Methods(http.MethodGet)
+	router.HandleFunc("/products/category/{category}", handler.handleFilteringByCategory).Methods(http.MethodGet)
 	router.HandleFunc("/product/search/{queryStr}", handler.handleProductsSearching).Methods(http.MethodGet)
 	router.HandleFunc("/products/{storeId}", auth.WithJWTAuth(handler.handleFilteringByStoreId, handler.userStore, "admin")).Methods(http.MethodGet)
 
 	//inventory management
-	router.HandleFunc("/product/quantity/{productId}/{num}", auth.WithJWTAuth(handler.handleUpdateProductQuatity, handler.userStore)).Methods(http.MethodPut)
-	router.HandleFunc("/product/stock/increase/{productId}/{num}", auth.WithJWTAuth(handler.handleIncrementProductStock, handler.userStore)).Methods(http.MethodPut)
-	router.HandleFunc("/product/stock/decrease/{productId}/{num}", auth.WithJWTAuth(handler.handleDecrementProductStock, handler.userStore)).Methods(http.MethodPut)
-	router.HandleFunc("/product/activate/{productId}", auth.WithJWTAuth(handler.handleProductActivation, handler.userStore)).Methods(http.MethodPut)
-	router.HandleFunc("/product/deactivate/{productId}", auth.WithJWTAuth(handler.handleProductDeactivation, handler.userStore)).Methods(http.MethodPut)
+	router.HandleFunc("/product/quantity/{productId}/{num}", auth.WithJWTAuth(handler.handleUpdateProductQuatity, handler.userStore, "admin", "storeowner")).Methods(http.MethodPut)
+	router.HandleFunc("/product/stock/increase/{productId}/{num}", auth.WithJWTAuth(handler.handleIncrementProductStock, handler.userStore, "admin", "storeowner")).Methods(http.MethodPut)
+	router.HandleFunc("/product/stock/decrease/{productId}/{num}", auth.WithJWTAuth(handler.handleDecrementProductStock, handler.userStore, "admin", "storeowner")).Methods(http.MethodPut)
+	router.HandleFunc("/product/activate/{productId}", auth.WithJWTAuth(handler.handleProductActivation, handler.userStore, "admin", "storeowner")).Methods(http.MethodPut)
+	router.HandleFunc("/product/deactivate/{productId}", auth.WithJWTAuth(handler.handleProductDeactivation, handler.userStore, "admin", "storeowner")).Methods(http.MethodPut)
 
 	//admin route
 	router.HandleFunc("/products", auth.WithJWTAuth(handler.handleCreateProducts, handler.userStore, "admin", "storeowner")).Methods(http.MethodPost)

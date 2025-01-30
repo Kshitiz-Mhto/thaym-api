@@ -3,6 +3,7 @@ package cart
 import (
 	"ecom-api/internal/application/core/types/entity"
 	"fmt"
+	"math"
 )
 
 func getCartItemsIDs(items []entity.CartCheckoutItem) ([]string, error) {
@@ -40,20 +41,21 @@ func calculateTotalPrice(cartItems []entity.CartCheckoutItem, products map[strin
 
 	for _, item := range cartItems {
 		product := products[item.ProductID]
-		totalPriceBeforeTaxAndDis += product.Price * float64(item.Quantity)
-		totalPriceAfterTaxAndDis += totalPriceBeforeTaxAndDis - item.Discount*product.Price + item.Tax*product.Price
+		itemTotalBefore := product.Price * float64(item.Quantity)
+		itemTotalAfter := itemTotalBefore - (item.Discount * product.Price) + (item.Tax * product.Price)
+
+		totalPriceBeforeTaxAndDis += itemTotalBefore
+		totalPriceAfterTaxAndDis += itemTotalAfter
 	}
-	return totalPriceBeforeTaxAndDis, totalPriceAfterTaxAndDis
+
+	return roundToTwoDecimals(totalPriceBeforeTaxAndDis), roundToTwoDecimals(totalPriceAfterTaxAndDis)
 }
 
 func calculateIndivisualProductPricing(product entity.Product, item entity.CartCheckoutItem) (float64, float64) {
-	var totalPriceAfterTaxAndDis float64
-	var totalPriceBeforeTaxAndDis float64
+	totalPriceBeforeTaxAndDis := product.Price * float64(item.Quantity)
+	totalPriceAfterTaxAndDis := totalPriceBeforeTaxAndDis - (item.Discount * product.Price) + (item.Tax * product.Price)
 
-	totalPriceBeforeTaxAndDis += product.Price * float64(item.Quantity)
-	totalPriceAfterTaxAndDis += totalPriceBeforeTaxAndDis - item.Discount*product.Price + item.Tax*product.Price
-
-	return totalPriceBeforeTaxAndDis, totalPriceAfterTaxAndDis
+	return roundToTwoDecimals(totalPriceBeforeTaxAndDis), roundToTwoDecimals(totalPriceAfterTaxAndDis)
 }
 
 func (handler *CartHandler) createOrder(products []entity.Product, cartItems []entity.CartCheckoutItem, userID string) (string, float64, float64, error) {
@@ -107,4 +109,8 @@ func (handler *CartHandler) createOrder(products []entity.Product, cartItems []e
 	}
 
 	return orderId, totalPriceBeforeTaxAndDis, totalPriceAfterTaxAndDis, nil
+}
+
+func roundToTwoDecimals(value float64) float64 {
+	return math.Round(value*100) / 100
 }
