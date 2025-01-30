@@ -35,7 +35,7 @@ func sendHtmlEmail(to []string, subject string, htmlBody string) error {
 }
 
 func HTMLTemplateEmailHandler(w http.ResponseWriter, r *http.Request, addr string, vars map[string]string) {
-	basePathForEmailHtml := "./internal/adapters/framework/left/services/user/static/"
+	basePathForEmailHtml := "./static/"
 	emailSubject := "Verify Your Email"
 
 	// Ensure the request method is POST
