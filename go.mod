@@ -13,8 +13,6 @@ require (
 	golang.org/x/crypto v0.31.0
 )
 
-require github.com/joeljunstrom/go-luhn v0.0.0-20190413165225-1e071b33b576
-
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
