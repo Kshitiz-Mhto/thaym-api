@@ -1,16 +1,22 @@
 package payment
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 
 	"ecom-api/internal/adapters/framework/left/services/auth"
 	"ecom-api/internal/application/core/types/entity/payloads"
 	"ecom-api/internal/ports/right/rports"
+	"ecom-api/pkg/configs"
 	"ecom-api/utils"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/webhook"
 )
 
 type PaymentHandler struct {
@@ -30,31 +36,54 @@ func (handler *PaymentHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/payment_method/{customerId}", auth.WithJWTAuth(handler.handlePaymentMethodCreation, handler.userStore, "admin", "user")).Methods(http.MethodPost)
 	router.HandleFunc("/charges/{customerId}", auth.WithJWTAuth(handler.handleCustomeChargeProcess, handler.userStore, "admin", "user")).Methods(http.MethodPost)
+
+	router.HandleFunc("/payment/webhook", auth.WithJWTAuth(handler.handlePaymentLiveUpdateThroughWebhook, handler.userStore, "admin", "user")).Methods(http.MethodPost)
 }
 
-func (handler *PaymentHandler) handleCustomerDeletion(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
+func (handler *PaymentHandler) handlePaymentLiveUpdateThroughWebhook(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
 		return
 	}
 
-	customerId, ok := vars["customerId"]
+	const MaxBodyBytes = int64(65536)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodyBytes)
 
-	if !ok {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing customer ID"))
-		return
-	}
-
-	isDeleted, err := handler.paymentStore.DeleteCustomer(customerId)
+	payload, err := ioutil.ReadAll(r.Body)
+	sigHeader := r.Header.Get("Stripe-Signature")
 
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("error reading request body: %v", err))
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, map[string]bool{"isDeleted": isDeleted}, nil)
+	event, err := webhook.ConstructEvent(payload, sigHeader, configs.Envs.StripeWebhookSecret)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("error verifying webhook signature: %v", err))
+		return
+	}
+
+	// Handle the event
+	switch event.Type {
+	case "payment_intent.succeeded":
+		var paymentIntent stripe.PaymentIntent
+		if err := json.Unmarshal(event.Data.Raw, &paymentIntent); err != nil {
+			utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("webhook error: %v", err))
+			return
+		}
+		log.Printf("PaymentIntent was successful: %s", paymentIntent.ID)
+	case "payment_intent.payment_failed":
+		var paymentIntent stripe.PaymentIntent
+		if err := json.Unmarshal(event.Data.Raw, &paymentIntent); err != nil {
+			utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("webhook error: %v", err))
+			return
+		}
+		log.Printf("PaymentIntent was Failed: %s, Reason:%s", paymentIntent.ID, paymentIntent.LastPaymentError.Msg)
+	default:
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("unhandled event type: %s", event.Type))
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, nil, nil)
 }
 
 func (handler *PaymentHandler) handleCustomeChargeProcess(w http.ResponseWriter, r *http.Request) {
@@ -220,4 +249,29 @@ func (handler *PaymentHandler) handlePaymentMethodCreation(w http.ResponseWriter
 
 	utils.WriteJSON(w, http.StatusCreated, paymentMethod, nil)
 
+}
+
+func (handler *PaymentHandler) handleCustomerDeletion(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	if r.Method != http.MethodPost {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	customerId, ok := vars["customerId"]
+
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing customer ID"))
+		return
+	}
+
+	isDeleted, err := handler.paymentStore.DeleteCustomer(customerId)
+
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, map[string]bool{"isDeleted": isDeleted}, nil)
 }
