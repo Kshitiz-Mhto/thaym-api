@@ -80,5 +80,4 @@ type CustomerChargeRequest struct {
 	Currency     string `json:"currency" validate:"required"`
 	ReceiptEmail string `json:"receipt_email" validate:"required"`
 	Description  string `json:"description" validate:"required"`
-	Token        string `json:"token" validate:"required"`
 }

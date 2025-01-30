@@ -3,8 +3,6 @@ package payment
 import (
 	"fmt"
 	"net/http"
-	"strconv"
-	"time"
 
 	"ecom-api/internal/adapters/framework/left/services/auth"
 	"ecom-api/internal/application/core/types/entity/payloads"
@@ -13,7 +11,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
-	luhn "github.com/joeljunstrom/go-luhn"
 )
 
 type PaymentHandler struct {
@@ -140,7 +137,7 @@ func (handler *PaymentHandler) handleGetCustomers(w http.ResponseWriter, r *http
 }
 
 func (handler *PaymentHandler) handlePaymentMethodCreation(w http.ResponseWriter, r *http.Request) {
-	var stripeCard payloads.StripeCardPayload
+	// var stripeCard payloads.StripeCardPayload
 	vars := mux.Vars(r)
 
 	if r.Method != http.MethodPost {
@@ -155,41 +152,41 @@ func (handler *PaymentHandler) handlePaymentMethodCreation(w http.ResponseWriter
 		return
 	}
 
-	if err := utils.ParseJSON(r, &stripeCard); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
-		return
-	}
+	// if err := utils.ParseJSON(r, &stripeCard); err != nil {
+	// 	utils.WriteError(w, http.StatusBadRequest, err)
+	// 	return
+	// }
 
-	if err := utils.Validate.Struct(stripeCard); err != nil {
-		errors := err.(validator.ValidationErrors)
-		utils.WriteError(w, http.StatusBadRequest, errors)
-		return
-	}
+	// if err := utils.Validate.Struct(stripeCard); err != nil {
+	// 	errors := err.(validator.ValidationErrors)
+	// 	utils.WriteError(w, http.StatusBadRequest, errors)
+	// 	return
+	// }
 
-	if !luhn.Valid(stripeCard.Number) {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("provide valid card number"))
-		return
-	}
+	// if !luhn.Valid(stripeCard.Number) {
+	// 	utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("provide valid card number"))
+	// 	return
+	// }
 
-	expMonth, err := strconv.Atoi(stripeCard.ExpMonth)
-	if err != nil || expMonth < 1 || expMonth > 12 {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("provide a valid expiration month (01-12)"))
-		return
-	}
+	// expMonth, err := strconv.Atoi(stripeCard.ExpMonth)
+	// if err != nil || expMonth < 1 || expMonth > 12 {
+	// 	utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("provide a valid expiration month (01-12)"))
+	// 	return
+	// }
 
-	expYear, err := strconv.Atoi(stripeCard.ExpYear)
-	if err != nil || expYear < time.Now().Year() {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("expiration year must be this year or later"))
-		return
-	}
+	// expYear, err := strconv.Atoi(stripeCard.ExpYear)
+	// if err != nil || expYear < time.Now().Year() {
+	// 	utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("expiration year must be this year or later"))
+	// 	return
+	// }
 
-	currentYear, currentMonth, _ := time.Now().Date()
-	if expYear == currentYear && expMonth < int(currentMonth) {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("expiration date must be in the future"))
-		return
-	}
+	// currentYear, currentMonth, _ := time.Now().Date()
+	// if expYear == currentYear && expMonth < int(currentMonth) {
+	// 	utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("expiration date must be in the future"))
+	// 	return
+	// }
 
-	paymentMethod, err := handler.paymentStore.CreatePaymentMethod(customerId, &stripeCard)
+	paymentMethod, err := handler.paymentStore.CreatePaymentMethod(customerId)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return

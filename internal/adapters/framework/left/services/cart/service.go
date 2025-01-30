@@ -19,7 +19,7 @@ func getCartItemsIDs(items []entity.CartCheckoutItem) ([]string, error) {
 
 func checkIfCartIsInStock(cartItems []entity.CartCheckoutItem, products map[string]entity.Product) error {
 	if len(cartItems) == 0 {
-		return fmt.Errorf("cart is empty!!")
+		return fmt.Errorf("cart is empty")
 	}
 	for _, item := range cartItems {
 

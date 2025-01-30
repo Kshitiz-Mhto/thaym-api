@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/charge"
 	"github.com/stripe/stripe-go/customer"
+	"github.com/stripe/stripe-go/paymentintent"
 	"github.com/stripe/stripe-go/paymentmethod"
 )
 
@@ -72,50 +72,51 @@ func (store *PaymentStore) GetAllStripeCustomers() ([]stripe.Customer, error) {
 	return customers, nil
 }
 
-func (store *PaymentStore) CreatePaymentMethod(customerId string, card *payloads.StripeCardPayload) (*stripe.PaymentMethod, error) {
-	var params *stripe.PaymentMethodParams
+func (store *PaymentStore) CreatePaymentMethod(customerId string) (*stripe.PaymentMethod, error) {
 
-	if card.Type == "card" {
-		params = &stripe.PaymentMethodParams{
-			Type: stripe.String(card.Type),
-			Card: &stripe.PaymentMethodCardParams{
-				Number:   stripe.String(card.Number),
-				ExpMonth: stripe.String(card.ExpMonth),
-				ExpYear:  stripe.String(card.ExpYear),
-				CVC:      stripe.String(card.CVC),
-			},
-		}
-	} else {
-		return nil, fmt.Errorf("unsupported payment method type %s", card.Type)
+	//test-mode
+	params := &stripe.PaymentMethodParams{
+		Type: stripe.String("card"),
+		Card: &stripe.PaymentMethodCardParams{
+			Token: stripe.String("tok_amex"), // Use a Stripe test token
+		},
 	}
 
 	paymentMethod, err := paymentmethod.New(params)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create payment method")
+		return nil, fmt.Errorf("unable to create payment method: %v", err)
 	}
 
-	_, error := AttachCustomerPaymentMethod(customerId, paymentMethod.ID)
+	_, err = AttachCustomerPaymentMethod(customerId, paymentMethod.ID)
 
-	if error != nil {
+	if err != nil {
 		return nil, fmt.Errorf("unable to attach payment method to customer %s", customerId)
 	}
 
 	return paymentMethod, nil
 }
 
-func (store *PaymentStore) CreateStripeCharge(chargeParams *payloads.CustomerChargeRequest, customerId string) (*stripe.Charge, error) {
-	params := &stripe.ChargeParams{
-		Amount:       stripe.Int64(chargeParams.Amount),
-		Currency:     stripe.String(chargeParams.Currency),
-		ReceiptEmail: stripe.String(chargeParams.ReceiptEmail),
-		Description:  stripe.String(chargeParams.Description),
-		Source:       &stripe.SourceParams{Token: stripe.String("tok_visa")},
-		Customer:     stripe.String(customerId),
+func (store *PaymentStore) CreateStripeCharge(chargeParams *payloads.CustomerChargeRequest, customerId string) (*stripe.PaymentIntent, error) {
+	testPaymentMethodID := "pm_card_amex" // Stripe's test Visa payment method
+
+	params := &stripe.PaymentIntentParams{
+		Amount:             stripe.Int64(chargeParams.Amount),
+		Currency:           stripe.String(chargeParams.Currency),
+		ReceiptEmail:       stripe.String(chargeParams.ReceiptEmail),
+		Description:        stripe.String(chargeParams.Description),
+		Customer:           stripe.String(customerId),
+		PaymentMethod:      stripe.String(testPaymentMethodID),
+		Confirm:            stripe.Bool(true), // Automatically confirm in test mode
+		ConfirmationMethod: stripe.String(string(stripe.PaymentIntentConfirmationMethodAutomatic)),
 	}
 
-	charge, err := charge.New(params)
+	// Add test-specific metadata (optional)
+	params.AddMetadata("environment", "test")
+	params.AddMetadata("test_case", "successful_payment")
+
+	charge, err := paymentintent.New(params)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create charge")
+		return nil, fmt.Errorf("payment faild:%s", err)
 	}
 
 	return charge, nil
@@ -146,16 +147,38 @@ func AttachCustomerPaymentMethod(customerId string, paymentMethodId string) (*st
 	params := &stripe.PaymentMethodAttachParams{
 		Customer: stripe.String(customerId),
 	}
-	paymentmethod, err := paymentmethod.Attach(
+	paymentAttach, err := paymentmethod.Attach(
 		paymentMethodId,
 		params,
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("uable to attach: %v", err)
 	}
 
-	fmt.Println(paymentmethod)
+	return paymentAttach, nil
+}
 
-	return paymentmethod, nil
+func InProduction() {
+	// // Use Stripe.js to create a token
+	// const { token, error } = await stripe.createToken('card', {
+	// 	number: '4242424242424242',
+	// 	exp_month: '12',
+	// 	exp_year: '2025',
+	// 	cvc: '123',
+	// });
+
+	// Use stripe.createToken to convert information collected by card elements into a single-use Token that you safely pass to your server to use in an API call.
+
+	// // Send the token (e.g., `tok_visa`) to your backend
+
+	// params := &stripe.PaymentMethodParams{
+	//     Type: stripe.String("card"),
+	//     Card: &stripe.PaymentMethodCardParams{
+	//         Token: stripe.String(token), // Use the client-side token
+	//     },
+	// }
+
+	// paymentMethod, err := paymentmethod.New(params)
+	// ... rest of the code ...
 }

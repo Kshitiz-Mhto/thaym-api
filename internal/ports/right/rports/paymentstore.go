@@ -13,8 +13,8 @@ type PaymentStore interface {
 	GetAllStripeCustomers() ([]stripe.Customer, error)
 
 	//payment method
-	CreatePaymentMethod(customerId string, card *payloads.StripeCardPayload) (*stripe.PaymentMethod, error)
+	CreatePaymentMethod(customerId string) (*stripe.PaymentMethod, error)
 
 	//charge method
-	CreateStripeCharge(chargeParams *payloads.CustomerChargeRequest, customerId string) (*stripe.Charge, error)
+	CreateStripeCharge(chargeParams *payloads.CustomerChargeRequest, customerId string) (*stripe.PaymentIntent, error)
 }
