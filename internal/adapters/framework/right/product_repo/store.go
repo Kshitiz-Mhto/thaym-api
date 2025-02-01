@@ -340,6 +340,31 @@ func (s *Store) GetProductsByStoreOwner(storeId string) ([]*entity.Product, erro
 	return products, nil
 }
 
+func (store *Store) GetProductStock(id string) (int64, error) {
+	rows, err := store.db.Query("SELECT * FROM products WHERE productId = ?", id)
+	if err != nil {
+		return 0, err
+	}
+
+	defer rows.Close()
+
+	var inStock int64
+
+	for rows.Next() {
+		product, err := scanRowsIntoProduct(rows)
+		if err != nil {
+			return 0, err
+		}
+		inStock = int64(product.Quantity)
+	}
+
+	if err = rows.Err(); err != nil {
+		return 0, err
+	}
+
+	return inStock, nil
+}
+
 func containsIgnoreCase(source, query string) bool {
 	return strings.Contains(strings.ToLower(source), query)
 }

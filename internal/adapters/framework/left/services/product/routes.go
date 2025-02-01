@@ -34,6 +34,7 @@ func (handler *ProductHandler) RegisterRoutes(router *mux.Router) {
 	//filtering-searching
 	router.HandleFunc("/products/category/{category}", handler.handleFilteringByCategory).Methods(http.MethodGet)
 	router.HandleFunc("/product/search/{queryStr}", handler.handleProductsSearching).Methods(http.MethodGet)
+	router.HandleFunc("/product/stock/{productId}", handler.handleGetProductStock).Methods(http.MethodGet)
 	router.HandleFunc("/products/{storeId}", auth.WithJWTAuth(handler.handleFilteringByStoreId, handler.userStore, "admin")).Methods(http.MethodGet)
 
 	//inventory management
@@ -50,7 +51,6 @@ func (handler *ProductHandler) RegisterRoutes(router *mux.Router) {
 }
 
 func (handler *ProductHandler) handleGetProducts(w http.ResponseWriter, r *http.Request) {
-
 	if r.Method != http.MethodGet {
 		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
 		return
@@ -415,4 +415,26 @@ func (handler *ProductHandler) handleUpdateProductQuatity(w http.ResponseWriter,
 	}
 
 	utils.WriteJSON(w, http.StatusCreated, map[string]bool{"success": true}, nil)
+}
+
+func (handler *ProductHandler) handleGetProductStock(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	vars := mux.Vars(r)
+	productId, ok := vars["productId"]
+
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing product ID"))
+		return
+	}
+
+	inStock, err := handler.store.GetProductStock(productId)
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, map[string]int64{"stock": inStock}, nil)
 }

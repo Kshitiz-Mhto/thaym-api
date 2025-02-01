@@ -14,6 +14,7 @@ type ProductStore interface {
 	UpdateProduct(product entity.Product) error                // Update product details
 	DeleteProductByID(id string) error                         // Delete a product by its ID
 	UpdateProductByID(id string) error                         // Update a product by its ID
+	GetProductStock(id string) (int64, error)                  // Get product stock
 
 	// Filtering and searching
 	GetProductsByCategory(category string) ([]*entity.Product, error) // Fetch products by category
