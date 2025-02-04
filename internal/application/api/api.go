@@ -45,12 +45,12 @@ func (api *APIServer) Run() error {
 	productHandler.RegisterRoutes(subrouter)
 
 	orderStore := order.NewStore(api.db)
+	paymentStore := paymentrepo.NewPaymentStore()
 
-	cartHandler := cart.NewCartHandler(productStore, orderStore, userStore)
+	cartHandler := cart.NewCartHandler(productStore, orderStore, userStore, paymentStore)
 	cartHandler.RegisterRoutes(subrouter)
 
-	paymentStore := paymentrepo.NewPaymentStore()
-	paymentHandler := payment.NewPaymentHandler(paymentStore, userStore)
+	paymentHandler := payment.NewPaymentHandler(paymentStore, userStore, orderStore)
 	paymentHandler.RegisterRoutes(subrouter)
 
 	log.Println("Listening to ", api.addr)

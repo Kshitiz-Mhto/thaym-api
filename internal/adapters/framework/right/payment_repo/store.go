@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/checkout/session"
 	"github.com/stripe/stripe-go/customer"
 	"github.com/stripe/stripe-go/paymentintent"
 	"github.com/stripe/stripe-go/paymentmethod"
@@ -120,6 +121,34 @@ func (store *PaymentStore) CreateStripeCharge(chargeParams *payloads.CustomerCha
 	}
 
 	return charge, nil
+}
+
+func (store *PaymentStore) CreateCheckoutSession(orderID string, totalPrice float64, email string) (*stripe.CheckoutSession, error) {
+	params := &stripe.CheckoutSessionParams{
+		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+		Mode:               stripe.String(string(stripe.CheckoutSessionModePayment)),
+		LineItems: []*stripe.CheckoutSessionLineItemParams{
+			{
+				Currency: stripe.String("usd"),
+				Amount:   stripe.Int64(int64(totalPrice * 100)),
+				Quantity: stripe.Int64(1),
+			},
+		},
+		CustomerEmail: stripe.String(email),
+		Params: stripe.Params{
+			Metadata: map[string]string{
+				"order_id": orderID,
+			},
+		},
+		SuccessURL: stripe.String("https://localhost:8080/order/" + orderID),
+	}
+
+	session, err := session.New(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }
 
 func (store *PaymentStore) DeleteCustomer(id string) (bool, error) {

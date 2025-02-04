@@ -14,6 +14,7 @@ type PaymentStore interface {
 	DeleteCustomer(customerId string) (bool, error)
 
 	//payment method
+	CreateCheckoutSession(orderID string, totalPrice float64, email string) (*stripe.CheckoutSession, error)
 	CreatePaymentMethod(customerId string) (*stripe.PaymentMethod, error)
 
 	//charge method
