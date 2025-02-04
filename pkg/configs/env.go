@@ -23,6 +23,18 @@ type Config struct {
 	SMTPAddress            string
 	StripeSecretKey        string
 	StripePublshableKey    string
+	StripeWebhookSecret    string
+	StripeWebhookId        string
+	StringWebhookUrl       string
+	OrderStatusPending     string
+	OrderStatusProcessing  string
+	OrderStatusShipped     string
+	OrderStatusCompleted   string
+	OrderStatusCancelled   string
+	OrderStatusRefunded    string
+	PaymentStatusPending   string
+	PaymentStatusPaid      string
+	PaymentStatusRefunded  string
 }
 
 var Envs = initConfig()
@@ -44,6 +56,18 @@ func initConfig() Config {
 		SMTPAddress:            getEnv("SMTP_ADDR", "smtp.gmail.com:587"),
 		StripeSecretKey:        getEnv("SECRET_KEY_STRIPE", ""),
 		StripePublshableKey:    getEnv("PUBLISHABLE_KEY_STRIPE", ""),
+		StripeWebhookSecret:    getEnv("WEBHOOK_SECRET_STRIPE", ""),
+		StripeWebhookId:        getEnv("WEBHOOK_ID", "we_1QmYMpIxe6f8RrXlfX5urS8g"),
+		StringWebhookUrl:       getEnv("WEBHOOK_URL", "https://dashboard.stripe.com/webhook"),
+		OrderStatusPending:     getEnv("ORDER_STATUS_PENDING", "pending"),
+		OrderStatusProcessing:  getEnv("ORDER_STATUS_PROCESSING", "processing"),
+		OrderStatusShipped:     getEnv("ORDER_STATUS_SHIPPED", "shipped"),
+		OrderStatusCompleted:   getEnv("ORDER_STATUS_COMPLETED", "completed"),
+		OrderStatusCancelled:   getEnv("ORDER_STATUS_CANCELLED", "cancelled"),
+		OrderStatusRefunded:    getEnv("ORDER_STATUS_REFUNDED", "refunded"),
+		PaymentStatusPending:   getEnv("PAYMENT_STATUS_PENDING", "pending"),
+		PaymentStatusPaid:      getEnv("PAYMENT_STATUS_PAID", "paid"),
+		PaymentStatusRefunded:  getEnv("PAYMENT_STATUS_REFUNDED", "refunded"),
 	}
 }
 
