@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  <strong>Thāyṃ</strong> is a robust and scalable e-commerce API built with GoLang, leveraging Hexagonal Architecture. This design pattern ensures that the application is maintainable and adaptable over time, with clear separation of concerns. The API provides essential features for managing e-commerce operations, including secure JWT authentication, email confirmation, advanced filtering capabilities, inventory management, and role-based access control. Thāyṃ is designed to support multiple user roles such as Admin, User, and Store Owner, and allows for seamless product management, order tracking, and payment integrations. With its flexible and modular structure, Thāyṃ is ready to power a wide range of e-commerce applications while maintaining high performance and security.
+  <strong>Thāyṃ</strong> is a robust and scalable e-commerce API built with GoLang, leveraging Hexagonal Architecture. This design pattern ensures that the application is maintainable and adaptable over time, with clear separation of concerns. The API provides essential features for managing e-commerce operations, including secure JWT authentication, email confirmation, advanced filtering capabilities, inventory management, role-based access control and sure payment gateway integration. Thāyṃ is designed to support multiple user roles such as Admin, User, and Store Owner, and allows for seamless product management, order tracking, and payment integrations. With its flexible and modular structure, Thāyṃ is ready to power a wide range of e-commerce applications while maintaining high performance and security.
 </p>
 
 
@@ -27,6 +27,11 @@
 - Order management:
   - Seamless integration with payment gateways.
   - Tracking and updating order statuses.
+
+### Payment Gateway Integration
+- Supports mutliple payment providers (e.g., Stripe, Banks[can be configure])  
+- Secure transaction handling with encryption.
+- Payment successfull Alerting mechanism
 
 ---
 
