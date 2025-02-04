@@ -91,17 +91,17 @@ func (store *Store) UpdateOrderPaymentStatus(orderId, status string) error {
 
 	switch status {
 	case configs.Envs.PaymentStatusPending:
-		_, err = store.db.Exec("UPDATE orders SET paymentStatus = ? ", configs.Envs.PaymentStatusPending)
+		_, err = store.db.Exec("UPDATE orders SET paymentStatus = ? WHERE ID = ?", configs.Envs.PaymentStatusPending, orderId)
 		if err != nil {
 			return err
 		}
 	case configs.Envs.PaymentStatusPaid:
-		_, err = store.db.Exec("UPDATE orders SET paymentStatus = ? ", configs.Envs.PaymentStatusPaid)
+		_, err = store.db.Exec("UPDATE orders SET paymentStatus = ? WHERE ID = ?", configs.Envs.PaymentStatusPaid, orderId)
 		if err != nil {
 			return err
 		}
 	case configs.Envs.PaymentStatusRefunded:
-		_, err = store.db.Exec("UPDATE orders SET paymentStatus = ? ", configs.Envs.PaymentStatusRefunded)
+		_, err = store.db.Exec("UPDATE orders SET paymentStatus = ? WHERE ID = ?", configs.Envs.PaymentStatusRefunded, orderId)
 		if err != nil {
 			return err
 		}
@@ -116,32 +116,32 @@ func (store *Store) UpdateOrderStatus(orderId, status string) error {
 
 	switch status {
 	case configs.Envs.OrderStatusPending:
-		_, err = store.db.Exec("UPDATE orders SET status = ? ", configs.Envs.OrderStatusPending)
+		_, err = store.db.Exec("UPDATE orders SET status = ? WHERE ID = ?", configs.Envs.OrderStatusPending, orderId)
 		if err != nil {
 			return err
 		}
 	case configs.Envs.OrderStatusProcessing:
-		_, err = store.db.Exec("UPDATE orders SET status = ? ", configs.Envs.OrderStatusProcessing)
+		_, err = store.db.Exec("UPDATE orders SET status = ? WHERE ID = ?", configs.Envs.OrderStatusProcessing, orderId)
 		if err != nil {
 			return err
 		}
 	case configs.Envs.OrderStatusCancelled:
-		_, err = store.db.Exec("UPDATE orders SET status = ? ", configs.Envs.OrderStatusCancelled)
+		_, err = store.db.Exec("UPDATE orders SET status = ? WHERE ID = ?", configs.Envs.OrderStatusCancelled, orderId)
 		if err != nil {
 			return err
 		}
 	case configs.Envs.OrderStatusRefunded:
-		_, err = store.db.Exec("UPDATE orders SET status = ? ", configs.Envs.OrderStatusRefunded)
+		_, err = store.db.Exec("UPDATE orders SET status = ? WHERE ID = ?", configs.Envs.OrderStatusRefunded, orderId)
 		if err != nil {
 			return err
 		}
 	case configs.Envs.OrderStatusCompleted:
-		_, err = store.db.Exec("UPDATE orders SET status = ? ", configs.Envs.OrderStatusCompleted)
+		_, err = store.db.Exec("UPDATE orders SET status = ? WHERE ID = ?", configs.Envs.OrderStatusCompleted, orderId)
 		if err != nil {
 			return err
 		}
 	case configs.Envs.OrderStatusShipped:
-		_, err = store.db.Exec("UPDATE orders SET status = ? ", configs.Envs.OrderStatusShipped)
+		_, err = store.db.Exec("UPDATE orders SET status = ? WHERE ID = ?", configs.Envs.OrderStatusShipped, orderId)
 		if err != nil {
 			return err
 		}

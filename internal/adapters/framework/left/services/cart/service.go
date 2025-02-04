@@ -2,6 +2,7 @@ package cart
 
 import (
 	"ecom-api/internal/application/core/types/entity"
+	"ecom-api/pkg/configs"
 	"fmt"
 	"math"
 )
@@ -59,7 +60,6 @@ func calculateIndivisualProductPricing(product entity.Product, item entity.CartC
 }
 
 func (handler *CartHandler) createOrder(products []entity.Product, cartItems []entity.CartCheckoutItem, userID string) (string, float64, float64, error) {
-
 	productsMap := make(map[string]entity.Product)
 	for _, product := range products {
 		productsMap[product.ProductId] = product
@@ -81,11 +81,11 @@ func (handler *CartHandler) createOrder(products []entity.Product, cartItems []e
 		UserID:        userID,
 		Total:         totalPriceAfterTaxAndDis,
 		Subtotal:      totalPriceBeforeTaxAndDis,
-		Status:        "pending",
-		PaymentStatus: "pending",
+		Status:        configs.Envs.OrderStatusPending,
+		PaymentStatus: configs.Envs.PaymentStatusPending,
 		PaymentMethod: "Credit Card",
-		Address:       "Nepal, Bharatpur 44200",
-		Currency:      "usd",
+		Address:       "USA, New York, 123 wall street, Apt:10032, 143B",
+		Currency:      configs.Envs.DEFAULT_CURRENCY,
 	})
 
 	if err != nil {

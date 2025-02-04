@@ -14,16 +14,18 @@ import (
 )
 
 type CartHandler struct {
-	store      rports.ProductStore
-	orderStore rports.OrderStore
-	userStore  rports.UserStore
+	store        rports.ProductStore
+	orderStore   rports.OrderStore
+	userStore    rports.UserStore
+	paymentStore rports.PaymentStore
 }
 
-func NewCartHandler(store rports.ProductStore, orderStore rports.OrderStore, userStore rports.UserStore) *CartHandler {
+func NewCartHandler(store rports.ProductStore, orderStore rports.OrderStore, userStore rports.UserStore, paymentStore rports.PaymentStore) *CartHandler {
 	return &CartHandler{
-		store:      store,
-		orderStore: orderStore,
-		userStore:  userStore,
+		store:        store,
+		orderStore:   orderStore,
+		userStore:    userStore,
+		paymentStore: paymentStore,
 	}
 }
 
@@ -33,7 +35,7 @@ func (handler *CartHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/order/delete/{orderId}", auth.WithJWTAuth(handler.handleOrderDeletion, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodDelete)
 	router.HandleFunc("/order/{orderId}", auth.WithJWTAuth(handler.handleGetOrderById, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodGet)
-	router.HandleFunc("/order/{userId}", auth.WithJWTAuth(handler.handleGetOrderByUserId, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodGet)
+	router.HandleFunc("/order/user/{userId}", auth.WithJWTAuth(handler.handleGetOrderByUserId, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodGet)
 	router.HandleFunc("/order/update/paymentstatus/{orderId}", auth.WithJWTAuth(handler.handlerUpdateOrderPaymentStatus, handler.userStore)).Methods(http.MethodPost)
 	router.HandleFunc("/order/update/status/{orderId}", auth.WithJWTAuth(handler.handlerUpdateOrderStatus, handler.userStore)).Methods(http.MethodPost)
 	router.HandleFunc("/orderitem/{orderId}", auth.WithJWTAuth(handler.handleGetOrderItemByOrderId, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodGet)
@@ -45,6 +47,7 @@ func (handler *CartHandler) handleCartCheckout(w http.ResponseWriter, r *http.Re
 	userID := auth.GetUserIDFromContext(r.Context())
 
 	var cart payloads.CartCheckoutPayload
+	// var storeCustomer *entity.User
 
 	if r.Method != http.MethodPost {
 		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
@@ -74,16 +77,38 @@ func (handler *CartHandler) handleCartCheckout(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	orderId, subTotalPrice, totalPrice, err := handler.createOrder(products, cart.Items, userID)
+	orderId, subTotal, totalPrice, err := handler.createOrder(products, cart.Items, userID)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
+	// -------------------- for checkout session -------------------
+	// storeCustomer, err = handler.userStore.GetUserByID(userID)
+	// if err != nil {
+	// 	utils.WriteError(w, http.StatusInternalServerError, err)
+	// 	return
+	// }
+
+	// session, err := handler.paymentStore.CreateCheckoutSession(orderId, totalPrice, storeCustomer.Email)
+	// if err != nil {
+	// 	utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("error creating checkout session: %v", err))
+	// 	return
+	// }
+
+	// utils.WriteJSON(w, http.StatusOK, map[string]interface{}{
+	// 	"paid":     session.PaymentIntent.Amount,
+	// 	"customer": session.Customer,
+	// 	"items":    session.DisplayItems,
+	// 	"balance":  session.Customer.Balance,
+	// 	"currency": session.PaymentIntent.Currency,
+	// }, nil)
+
 	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{
-		"total_price":                    totalPrice,
-		"total_price_before_tax_and_dis": subTotalPrice,
-		"order_id":                       orderId,
+		"total":    totalPrice,
+		"subTotal": subTotal,
+		"userId":   userID,
+		"orderId":  orderId,
 	}, nil)
 }
 
