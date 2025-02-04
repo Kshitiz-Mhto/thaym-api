@@ -21,6 +21,7 @@ type Config struct {
 	FromEmailPassword      string
 	FromEmailSMTP          string
 	SMTPAddress            string
+	DEFAULT_CURRENCY       string
 	StripeSecretKey        string
 	StripePublshableKey    string
 	StripeWebhookSecret    string
@@ -54,6 +55,7 @@ func initConfig() Config {
 		FromEmailPassword:      getEnv("FROM_EMAIL_PASSWORD", ""),
 		FromEmailSMTP:          getEnv("FROM_EMAIL_SMTP", "smtp.gmail.com"),
 		SMTPAddress:            getEnv("SMTP_ADDR", "smtp.gmail.com:587"),
+		DEFAULT_CURRENCY:       getEnv("DEFAULT_CURRENCY", "usd"),
 		StripeSecretKey:        getEnv("SECRET_KEY_STRIPE", ""),
 		StripePublshableKey:    getEnv("PUBLISHABLE_KEY_STRIPE", ""),
 		StripeWebhookSecret:    getEnv("WEBHOOK_SECRET_STRIPE", ""),
