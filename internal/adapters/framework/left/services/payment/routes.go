@@ -74,22 +74,7 @@ func (handler *PaymentHandler) handleCustomeChargeProcess(w http.ResponseWriter,
 		return
 	}
 
-	userID := auth.GetUserIDFromContext(r.Context())
-
-	user, err := handler.userStore.GetUserByID(userID)
-	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	HTMLTemplateEmailHandler(w, r, user.Email, map[string]string{
-		"username": user.FirstName + " " + user.LastName,
-		"email":    configs.Envs.FromEmail,
-		"address":  "USA, New York, 123 wall street, Apt:10032, 143B",
-	})
-
 	utils.WriteJSON(w, http.StatusCreated, map[string]interface{}{"charge": charge.Amount}, nil)
-
 }
 
 func (handler *PaymentHandler) handleCustomerCreation(w http.ResponseWriter, r *http.Request) {
@@ -312,6 +297,17 @@ func (handler *PaymentHandler) handlePaymentLiveUpdateThroughWebhook(w http.Resp
 			return
 		}
 		log.Printf("Charge succeeded for charge ID: %s, amount: %d", charge.ID, charge.Amount)
+		userID := auth.GetUserIDFromContext(r.Context())
+		user, err := handler.userStore.GetUserByID(userID)
+		if err != nil {
+			utils.WriteError(w, http.StatusInternalServerError, err)
+			return
+		}
+		HTMLTemplateEmailHandler(w, r, user.Email, map[string]string{
+			"username": user.FirstName + " " + user.LastName,
+			"email":    configs.Envs.FromEmail,
+			"address":  "USA, New York, 123 wall street, Apt:10032, 143B",
+		})
 
 	case "payment_intent.payment_failed":
 		var paymentIntent stripe.PaymentIntent

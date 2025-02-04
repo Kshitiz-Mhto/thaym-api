@@ -68,5 +68,5 @@ func HTMLTemplateEmailHandler(w http.ResponseWriter, r *http.Request, addr strin
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, map[string]bool{"emailSent": true}, nil)
+	// utils.WriteJSON(w, http.StatusOK, map[string]bool{"emailSent": true}, nil)
 }
