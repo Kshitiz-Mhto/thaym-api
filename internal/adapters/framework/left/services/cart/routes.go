@@ -32,9 +32,10 @@ func (handler *CartHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/cart/delete_orderitem/{orderItemId}", auth.WithJWTAuth(handler.handleOrderItemDeletion, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodDelete)
 
 	router.HandleFunc("/order/delete/{orderId}", auth.WithJWTAuth(handler.handleOrderDeletion, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodDelete)
-
 	router.HandleFunc("/order/{orderId}", auth.WithJWTAuth(handler.handleGetOrderById, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodGet)
 	router.HandleFunc("/order/{userId}", auth.WithJWTAuth(handler.handleGetOrderByUserId, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodGet)
+	router.HandleFunc("/order/update/paymentstatus/{orderId}", auth.WithJWTAuth(handler.handlerUpdateOrderPaymentStatus, handler.userStore)).Methods(http.MethodPost)
+	router.HandleFunc("/order/update/status/{orderId}", auth.WithJWTAuth(handler.handlerUpdateOrderStatus, handler.userStore)).Methods(http.MethodPost)
 	router.HandleFunc("/orderitem/{orderId}", auth.WithJWTAuth(handler.handleGetOrderItemByOrderId, handler.userStore, "admin", "storeowner", "user")).Methods(http.MethodGet)
 
 }
@@ -200,4 +201,52 @@ func (handler *CartHandler) handleGetOrderItemByOrderId(w http.ResponseWriter, r
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, orderitems, nil)
+}
+
+func (handler *CartHandler) handlerUpdateOrderPaymentStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	vars := mux.Vars(r)
+	var status string
+
+	orderId, ok := vars["orderId"]
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing order ID"))
+		return
+	}
+
+	err := handler.orderStore.UpdateOrderPaymentStatus(orderId, status)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, map[string]string{"orderId": orderId, "paymentSatus": status}, nil)
+}
+
+func (handler *CartHandler) handlerUpdateOrderStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.WriteError(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		return
+	}
+
+	vars := mux.Vars(r)
+	var status string
+
+	orderId, ok := vars["orderId"]
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing order ID"))
+		return
+	}
+
+	err := handler.orderStore.UpdateOrderPaymentStatus(orderId, status)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, map[string]string{"orderId": orderId, "orderSatus": status}, nil)
 }

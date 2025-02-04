@@ -10,6 +10,8 @@ type OrderStore interface {
 	GetOrdersByUserID(userID string) ([]*entity.Order, error) // Retrieve all orders for a specific user
 	UpdateOrder(order entity.Order) error                     // Update an existing order
 	DeleteOrder(orderID string) error                         // Delete an order and its associated items
+	UpdateOrderPaymentStatus(orderId, status string) error
+	UpdateOrderStatus(orderId, status string) error
 
 	CreateOrderItem(orderItem entity.OrderItem) error                   // Add an item to an order
 	GetOrderItemsByOrderId(orderID string) ([]*entity.OrderItem, error) // Retrieve all items for a specific order

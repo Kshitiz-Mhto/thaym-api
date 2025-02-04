@@ -57,6 +57,11 @@ func (handler *PaymentHandler) handlePaymentLiveUpdateThroughWebhook(w http.Resp
 		return
 	}
 
+	if sigHeader == "" {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("error: signature is empty"))
+		return
+	}
+
 	event, err := webhook.ConstructEvent(payload, sigHeader, configs.Envs.StripeWebhookSecret)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("error verifying webhook signature: %v", err))
@@ -119,7 +124,7 @@ func (handler *PaymentHandler) handleCustomeChargeProcess(w http.ResponseWriter,
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, charge, nil)
+	utils.WriteJSON(w, http.StatusCreated, map[string]interface{}{"charge": charge.Amount}, nil)
 
 }
 

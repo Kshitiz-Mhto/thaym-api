@@ -3,6 +3,7 @@ package order
 import (
 	"database/sql"
 	"ecom-api/internal/application/core/types/entity"
+	"ecom-api/pkg/configs"
 	"fmt"
 	"log"
 )
@@ -83,6 +84,72 @@ func (store *Store) UpdateOrder(order entity.Order) error {
 		return err
 	}
 	return err
+}
+
+func (store *Store) UpdateOrderPaymentStatus(orderId, status string) error {
+	var err error
+
+	switch status {
+	case configs.Envs.PaymentStatusPending:
+		_, err = store.db.Exec("UPDATE orders SET paymentStatus = ? ", configs.Envs.PaymentStatusPending)
+		if err != nil {
+			return err
+		}
+	case configs.Envs.PaymentStatusPaid:
+		_, err = store.db.Exec("UPDATE orders SET paymentStatus = ? ", configs.Envs.PaymentStatusPaid)
+		if err != nil {
+			return err
+		}
+	case configs.Envs.PaymentStatusRefunded:
+		_, err = store.db.Exec("UPDATE orders SET paymentStatus = ? ", configs.Envs.PaymentStatusRefunded)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("payment status not allowed: %s", status)
+	}
+
+	return nil
+}
+func (store *Store) UpdateOrderStatus(orderId, status string) error {
+	var err error
+
+	switch status {
+	case configs.Envs.OrderStatusPending:
+		_, err = store.db.Exec("UPDATE orders SET status = ? ", configs.Envs.OrderStatusPending)
+		if err != nil {
+			return err
+		}
+	case configs.Envs.OrderStatusProcessing:
+		_, err = store.db.Exec("UPDATE orders SET status = ? ", configs.Envs.OrderStatusProcessing)
+		if err != nil {
+			return err
+		}
+	case configs.Envs.OrderStatusCancelled:
+		_, err = store.db.Exec("UPDATE orders SET status = ? ", configs.Envs.OrderStatusCancelled)
+		if err != nil {
+			return err
+		}
+	case configs.Envs.OrderStatusRefunded:
+		_, err = store.db.Exec("UPDATE orders SET status = ? ", configs.Envs.OrderStatusRefunded)
+		if err != nil {
+			return err
+		}
+	case configs.Envs.OrderStatusCompleted:
+		_, err = store.db.Exec("UPDATE orders SET status = ? ", configs.Envs.OrderStatusCompleted)
+		if err != nil {
+			return err
+		}
+	case configs.Envs.OrderStatusShipped:
+		_, err = store.db.Exec("UPDATE orders SET status = ? ", configs.Envs.OrderStatusShipped)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("order status not allowed: %s", status)
+	}
+
+	return nil
 }
 
 func (store *Store) DeleteOrder(orderID string) error {
