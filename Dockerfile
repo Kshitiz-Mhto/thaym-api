@@ -1,6 +1,6 @@
 FROM golang:1.23-alpine3.21
 
-EXPOSE 8080
+EXPOSE 8085
 
 RUN apk update && apk add --no-cache mysql-client build-base
 
